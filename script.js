@@ -865,7 +865,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (selectedItems.has(mapKey)) {
                 elements.addToSelectionBtn.textContent = 'Añadido al Carrito (Cant: ' + selectedItems.get(mapKey).quantity + ')';
-                elements.addToSelectionBtn.disabled = false; // Mantener habilitado para permitir añadir más
+                elements.addToSelectionBtn.disabled = false; // Mantener habilitado para permitir añadir más desde el lightbox también
                 elements.addToSelectionBtn.classList.add('selected');
             } else {
                 elements.addToSelectionBtn.textContent = 'Añadir al Carrito';
@@ -1604,8 +1604,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const floatingButtons = [
             elements.header, // The header acts as a floating element
             elements.selectionIcon,
-            elements.whatsappFloatBtn,
-            elements.openAdminPanelBtn
+            elements.whatsappFloatBtn
+            // EXCLUIDO: elements.openAdminPanelBtn - Su visibilidad se maneja exclusivamente en init()
         ];
 
         mainSections.forEach(section => {
@@ -1635,7 +1635,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (showMain && isSelectionRelated) {
                     // Si estamos en la vista principal, updateSelectionUI se encargará de esto
                     // No hacemos nada aquí para evitar sobrescribir el control de updateSelectionUI
-                } else {
+                } else if (button !== elements.openAdminPanelBtn) { // EXCLUIR openAdminPanelBtn
                     button.style.display = showMain ? 'block' : 'none'; // Default behavior for other buttons
                 }
                 console.log(`DEBUG: Floating button ${button.id || button.className} display: ${button.style.display}`);
