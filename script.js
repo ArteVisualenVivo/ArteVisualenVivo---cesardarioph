@@ -742,7 +742,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
         } else if (context === 'product') {
-            // 'item' aquí es el objeto del producto padre (ej. {id: 'prod_taza_01', name: 'Taza', images: [...]})
+            // 'item' aquí es el objeto del producto padre (ej. {id: 'prod_taza_01', name: 'Taza', images: [...])
             currentLightboxItems = item.images; // currentLightboxItems son ahora las imágenes de ESTE producto
             if (item.images && item.images.length > 0) {
                  // Asegurar que la ruta de la imagen sea correcta para el lightbox del producto
