@@ -1,0 +1,316 @@
+[
+  {
+    "name": "15años",
+    "path": "15años",
+    "isProductCategory": false,
+    "content": [
+      {
+        "id": "1n95w9p",
+        "type": "image",
+        "src": "15años/magdalena/Generación X-000.jpg",
+        "name": "Generación X-000"
+      },
+      {
+        "id": "1n9pov2",
+        "type": "image",
+        "src": "15años/magdalena/Generación X-001.jpg",
+        "name": "Generación X-001"
+      },
+      {
+        "id": "1na9hgf",
+        "type": "image",
+        "src": "15años/magdalena/Generación X-002.jpg",
+        "name": "Generación X-002"
+      },
+      {
+        "id": "1ytcog5",
+        "type": "image",
+        "src": "15años/magdalena/magdalena.jpg",
+        "name": "magdalena"
+      }
+    ]
+  },
+  {
+    "name": "casamiento",
+    "path": "casamiento",
+    "isProductCategory": false,
+    "content": [
+      {
+        "id": "19idfeh",
+        "type": "image",
+        "src": "casamiento/Generación X-003.jpg",
+        "name": "Generación X-003"
+      },
+      {
+        "id": "19ix7zu",
+        "type": "image",
+        "src": "casamiento/Generación X-004.jpg",
+        "name": "Generación X-004"
+      },
+      {
+        "id": "19jh0l7",
+        "type": "image",
+        "src": "casamiento/Generación X-005.jpg",
+        "name": "Generación X-005"
+      },
+      {
+        "id": "nt2knp",
+        "type": "image",
+        "src": "casamiento/marta-pedro/marta-pedro.jpg",
+        "name": "marta-pedro"
+      }
+    ]
+  },
+  {
+    "name": "tienda-productos",
+    "path": "tienda-productos",
+    "isProductCategory": true,
+    "products": [
+      {
+        "id": "bfvnsv",
+        "name": "bolsas-de-friselina",
+        "path": "tienda-productos/bolsas-de-friselina",
+        "images": [
+          {
+            "id": "151pjpv",
+            "type": "image",
+            "src": "tienda-productos/bolsas-de-friselina/bolsadefriselina.jfif",
+            "name": "bolsadefriselina"
+          }
+        ]
+      },
+      {
+        "id": "92rzp0",
+        "name": "cantimploras",
+        "path": "tienda-productos/cantimploras",
+        "images": [
+          {
+            "id": "1tam1j2",
+            "type": "image",
+            "src": "tienda-productos/cantimploras/1.jfif",
+            "name": "1"
+          },
+          {
+            "id": "1trnnx9",
+            "type": "image",
+            "src": "tienda-productos/cantimploras/2.jfif",
+            "name": "2"
+          }
+        ]
+      },
+      {
+        "id": "11gvvxc",
+        "name": "destapadores",
+        "path": "tienda-productos/destapadores",
+        "images": [
+          {
+            "id": "lytvbm",
+            "type": "image",
+            "src": "tienda-productos/destapadores/1.jfif",
+            "name": "1"
+          }
+        ]
+      },
+      {
+        "id": "t2l5uz",
+        "name": "juego-de-mate",
+        "path": "tienda-productos/juego-de-mate",
+        "images": [
+          {
+            "id": "1knvdv1",
+            "type": "image",
+            "src": "tienda-productos/juego-de-mate/1.jfif",
+            "name": "1"
+          }
+        ]
+      },
+      {
+        "id": "ol2btt",
+        "name": "llaveros",
+        "path": "tienda-productos/llaveros",
+        "images": [
+          {
+            "id": "gxbub5",
+            "type": "image",
+            "src": "tienda-productos/llaveros/1.jfif",
+            "name": "1"
+          }
+        ]
+      },
+      {
+        "id": "oa3ytv",
+        "name": "mates",
+        "path": "tienda-productos/mates",
+        "images": [
+          {
+            "id": "1e0c2ak",
+            "type": "image",
+            "src": "tienda-productos/mates/ceramicos.jfif",
+            "name": "ceramicos"
+          },
+          {
+            "id": "1f2c3xj",
+            "type": "image",
+            "src": "tienda-productos/mates/polimero.jfif",
+            "name": "polimero"
+          }
+        ]
+      },
+      {
+        "id": "r58587",
+        "name": "mochilas",
+        "path": "tienda-productos/mochilas",
+        "images": [
+          {
+            "id": "c69lcr",
+            "type": "image",
+            "src": "tienda-productos/mochilas/1.jfif",
+            "name": "1"
+          }
+        ]
+      },
+      {
+        "id": "udorxb",
+        "name": "Mouse-Pad-Sublimado",
+        "path": "tienda-productos/Mouse-Pad-Sublimado",
+        "images": [
+          {
+            "id": "1vm4amv",
+            "type": "image",
+            "src": "tienda-productos/Mouse-Pad-Sublimado/pad.jfif",
+            "name": "pad"
+          },
+          {
+            "id": "10nn9uu",
+            "type": "image",
+            "src": "tienda-productos/Mouse-Pad-Sublimado/pad1.jfif",
+            "name": "pad1"
+          },
+          {
+            "id": "114ow91",
+            "type": "image",
+            "src": "tienda-productos/Mouse-Pad-Sublimado/pad2.jfif",
+            "name": "pad2"
+          }
+        ]
+      },
+      {
+        "id": "obwc20",
+        "name": "pines",
+        "path": "tienda-productos/pines",
+        "images": [
+          {
+            "id": "qcfi9c",
+            "type": "image",
+            "src": "tienda-productos/pines/1.jfif",
+            "name": "1"
+          }
+        ]
+      },
+      {
+        "id": "1jq9xoz",
+        "name": "platos-cubiertos",
+        "path": "tienda-productos/platos-cubiertos",
+        "images": [
+          {
+            "id": "14l3ren",
+            "type": "image",
+            "src": "tienda-productos/platos-cubiertos/1.jfif",
+            "name": "1"
+          }
+        ]
+      },
+      {
+        "id": "1ignkyv",
+        "name": "posa-vasos",
+        "path": "tienda-productos/posa-vasos",
+        "images": [
+          {
+            "id": "az1h9n",
+            "type": "image",
+            "src": "tienda-productos/posa-vasos/1.jfif",
+            "name": "1"
+          }
+        ]
+      },
+      {
+        "id": "sa40gi",
+        "name": "puas",
+        "path": "tienda-productos/puas",
+        "images": [
+          {
+            "id": "1wfmbvk",
+            "type": "image",
+            "src": "tienda-productos/puas/1.jfif",
+            "name": "1"
+          }
+        ]
+      },
+      {
+        "id": "1cgmnxr",
+        "name": "remeras-blancas",
+        "path": "tienda-productos/remeras-blancas",
+        "images": [
+          {
+            "id": "1rp82y1",
+            "type": "image",
+            "src": "tienda-productos/remeras-blancas/1.jfif",
+            "name": "1"
+          }
+        ]
+      },
+      {
+        "id": "114n6jh",
+        "name": "remeras-negras-estampadas",
+        "path": "tienda-productos/remeras-negras-estampadas",
+        "images": [
+          {
+            "id": "1i8ym2j",
+            "type": "image",
+            "src": "tienda-productos/remeras-negras-estampadas/1.jfif",
+            "name": "1"
+          }
+        ]
+      },
+      {
+        "id": "b21g6g",
+        "name": "stickers-sublimables-comunes",
+        "path": "tienda-productos/stickers-sublimables-comunes",
+        "images": [
+          {
+            "id": "zgdszu",
+            "type": "image",
+            "src": "tienda-productos/stickers-sublimables-comunes/1.jfif",
+            "name": "1"
+          }
+        ]
+      },
+      {
+        "id": "odync4",
+        "name": "tazas",
+        "path": "tienda-productos/tazas",
+        "images": [
+          {
+            "id": "1x2prtg",
+            "type": "image",
+            "src": "tienda-productos/tazas/1.jfif",
+            "name": "1"
+          }
+        ]
+      },
+      {
+        "id": "yfge92",
+        "name": "vasos-termicos",
+        "path": "tienda-productos/vasos-termicos",
+        "images": [
+          {
+            "id": "d7jw24",
+            "type": "image",
+            "src": "tienda-productos/vasos-termicos/1.jfif",
+            "name": "1"
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArteVisualenVivo & cesardarioph | Fotografía y Productos</title>
+    <meta name="description" content="Portafolio, tienda de fotografía y venta de productos sublimados: tazas, remeras, gorras y más;">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* Estilos generales para el cuerpo y contenedores */
+        body {
+            font-family: var(--body-font);
+            color: var(--light-color);
+            background-color: var(--dark-color);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        /* Añadir variables CSS para usar en el JS si es necesario, o directamente los colores */
+        :root {
+            --primary-color-rgb: 230, 57, 70; /* RGB de --primary-color para opacidades */
+        }
+
+        /* Estilos para el panel de administración */
+        .admin-panel-content .form-group {
+            margin-bottom: 15px;
+        }
+
+        .admin-panel-content label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: var(--text-color); /* Asegura que el color sea visible */
+        }
+
+        .admin-panel-content input[type="number"],
+        .admin-panel-content select,
+        .admin-panel-content textarea { /* Added textarea here */
+            width: calc(100% - 20px); /* Ajusta el ancho para dejar espacio para padding */
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            box-sizing: border-box; /* Incluye padding y border en el ancho total */
+        }
+        /* Specific style for textarea to allow vertical resize */
+        .admin-panel-content textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .admin-panel-content h3 {
+            margin-top: 30px;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+
+        /* Estilo para el contenedor dinámico de precio de producto */
+        #selected-product-price-input-container {
+            margin-top: 15px;
+            padding: 10px;
+            border: 1px dashed var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: rgba(var(--primary-color-rgb), 0.05); /* Un fondo sutil */
+        }
+        #selected-product-price-input-container .form-group {
+            margin-bottom: 0; /* Eliminar margen extra si es el único form-group dentro */
+        }
+
+        /* Styles for generated download link output */
+        #generated-download-link-output {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 10px;
+            word-break: break-all;
+            font-size: 0.9rem;
+            color: var(--text-color);
+            margin-top: 15px;
+            display: none; /* Hidden by default */
+        }
+        .button-group-horizontal {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .button-group-horizontal .btn {
+            flex: 1; /* Make buttons take equal width */
+            padding: 8px 15px; /* Smaller padding for these buttons */
+            font-size: 0.9rem; /* Smaller font size */
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <header class="header">
+        <div class="container">
+            <a href="#" class="logo">
+                <img src="assets/logo.png" alt="Logo ArteVisualenVivo" class="logo-img">
+                ArteVisualenVivo
+            </a>
+            <nav class="nav">
+                <ul class="nav-list">
+                    <li><a href="#hero">Inicio</a></li>
+                    <li><a href="#events">Eventos</a></li>
+                    <li><a href="#gallery">Galería</a></li>
+                    <li><a href="#services">Servicios</a></li>
+                    <li><a href="#products">Tienda</a></li>
+                    <li><a href="#contact">Contacto</a></li>
+                </ul>
+            </nav>
+            <div class="header-actions">
+                <div class="selection-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="selection-count">0</span>
+                </div>
+                <button class="menu-toggle" aria-label="Abrir menú">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MOBILE MENU -->
+    <div class="mobile-menu">
+        <button class="close-menu-btn" aria-label="Cerrar menú">&times;</button>
+        <ul class="mobile-nav-list">
+            <li><a href="#hero">Inicio</a></li>
+            <li><a href="#events">Eventos</a></li>
+            <li><a href="#gallery">Galería</a></li>
+            <li><a href="#services">Servicios</a></li>
+            <li><a href="#products">Tienda</a></li>
+            <li><a href="#contact">Contacto</a></li>
+        </ul>
+    </div>
+
+    <!-- HERO SECTION -->
+    <section id="hero" class="hero" style="background-image: url('assets/hero-bg.jfif');">
+        <div class="hero-content">
+            <h1>Capturamos tus Momentos, Creamos tus Ideas.</h1>
+            <p>Fotografía profesional para eventos, productos sublimados personalizados y más. ¡Haz de cada momento algo inolvidable!</p>
+            <div class="hero-buttons">
+                <a href="#events" class="btn btn-primary">Ver Eventos</a>
+                <a href="#products" class="btn btn-secondary">Comprar Productos</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- EVENTS PREVIEW SECTION -->
+    <section id="events" class="events">
+        <div class="container">
+            <h2 class="section-title">Nuestros Eventos Destacados</h2>
+            <p class="section-subtitle">Explora las coberturas más recientes y reviví esos momentos especiales.</p>
+            <div id="featured-events-container" class="featured-events-grid">
+                <!-- Las tarjetas de eventos se cargarán aquí dinámicamente desde JavaScript -->
+                <p class="event-placeholder">Cargando eventos...</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- GALLERY SECTION (detailed events) -->
+    <section id="gallery" class="gallery" style="display: none;">
+        <div class="container">
+            <h2 id="current-event-gallery-title" class="section-title">Galería de Fotos</h2>
+            <div class="filter-controls">
+                <label for="categoryFilter" class="sr-only">Filtrar por Evento:</label>
+                <select id="categoryFilter" class="filter-select">
+                    <option value="all">Todas las Fotos de Eventos</option>
+                    <!-- Las opciones de categorías se cargarán aquí dinámicamente -->
+                </select>
+            </div>
+            <div id="photoGrid" class="photo-grid">
+                <!-- Las fotos se cargarán aquí dinámicamente -->
+                <p class="event-placeholder">Selecciona un evento o verás todas las fotos aquí.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SERVICES SECTION (Hiring) -->
+    <section id="services" class="services">
+        <div class="container">
+            <h2 class="section-title">Nuestros Servicios de Cobertura</h2>
+            <p class="section-subtitle">Ofrecemos planes completos para capturar la esencia de cada ocasión. Contáctanos para un presupuesto personalizado.</p>
+            <div class="hiring-grid">
+                <div class="plan-card">
+                    <div class="plan-header">
+                        <i class="fas fa-camera icon"></i>
+                        <h3>Cobertura Estándar</h3>
+                    </div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check-circle"></i> Hasta 4 horas de evento</li>
+                        <li><i class="fas fa-check-circle"></i> Entrega de 100 fotos editadas</li>
+                        <li><i class="fas fa-check-circle"></i> Galería online privada</li>
+                        <li><i class="fas fa-times-circle"></i> Sesión pre-evento</li>
+                        <li><i class="fas fa-times-circle"></i> Álbum físico</li>
+                    </ul>
+                    <div class="plan-footer">
+                        <a href="#contact" class="btn btn-primary">Consultar Precio</a>
+                    </div>
+                </div>
+
+                <div class="plan-card highlight">
+                    <div class="plan-header">
+                        <i class="fas fa-star icon"></i>
+                        <h3>Plan Premium</h3>
+                    </div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check-circle"></i> Cobertura completa del evento (hasta 8 hs)</li>
+                        <li><i class="fas fa-check-circle"></i> Entrega de +250 fotos editadas</li>
+                        <li><i class="fas fa-check-circle"></i> Galería online con descarga</li>
+                        <li><i class="fas fa-check-circle"></i> Resolución óptima para impresión y redes sociales</li>
+                        <li><i class="fas fa-check-circle"></i> Sesión de fotos pre-evento</li>
+                        <li><i class="fas fa-check-circle"></i> Video resumen del evento</li>
+                    </ul>
+                    <div class="plan-footer">
+                        <a href="#contact" class="btn btn-primary">¡El más Elegido!</a>
+                    </div>
+                </div>
+
+                <div class="plan-card">
+                    <div class="plan-header">
+                        <i class="fas fa-video icon"></i>
+                        <h3>Paquete Completo</h3>
+                    </div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check-circle"></i> Cobertura de fotografía y video</li>
+                        <li><i class="fas fa-check-circle"></i> 6 horas de servicio</li>
+                        <li><i class="fas fa-check-circle"></i> Fotos y video editados en HD</li>
+                        <li><i class="fas fa-check-circle"></i> Entrega en pendrive personalizado</li>
+                        <li><i class="fas fa-times-circle"></i> Sesión pre-evento</li>
+                    </ul>
+                    <div class="plan-footer">
+                        <a href="#contact" class="btn btn-primary">Solicitar Información</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRODUCTS SECTION (Store) -->
+    <section id="products" class="products">
+        <div class="container">
+            <h2 class="section-title">Nuestra Tienda de Productos</h2>
+            <p class="section-subtitle">Explora nuestra selección de productos sublimados y estampados, ideales para regalos o para potenciar tu marca. ¡Personalízalos a tu gusto!</p>
+            <div id="featuredProductsGrid" class="photo-grid">
+                <!-- Los productos se cargarán aquí dinámicamente desde JavaScript -->
+                <p class="event-placeholder">Cargando productos...</p>
+            </div>
+            <p class="note-delivery"><strong>Nota importante:</strong> Los pedidos de productos tienen un tiempo de producción y entrega estimado que será coordinado al confirmar la compra.</p>
+        </div>
+    </section>
+
+    <!-- CONTACT SECTION -->
+    <section id="contact" class="contact">
+        <div class="container">
+            <h2 class="section-title">Contáctanos</h2>
+            <p class="section-subtitle">¿Listo para capturar un momento o personalizar un producto? Envíanos un mensaje o contáctanos directamente.</p>
+            <div class="contact-content">
+                <form class="contact-form">
+                    <div class="form-group">
+                        <label for="name">Nombre:</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email:</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Teléfono (opcional):</label>
+                        <input type="tel" id="phone" name="phone">
+                    </div>
+                    <div class="form-group">
+                        <label for="message">Tu Mensaje:</label>
+                        <textarea id="message" name="message" rows="6" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Enviar Mensaje</button>
+                </form>
+                <div class="contact-info">
+                    <h3>Información de Contacto</h3>
+                    <p><i class="fas fa-map-marker-alt"></i> Córdoba, Argentina</p>
+                    <p><i class="fas fa-phone"></i> +54 9 351 2417121</p>
+                    <p><i class="fas fa-envelope"></i> cesardarioph@gmail.com</p>
+                    <p><i class="fab fa-instagram"></i> artevisualenvivo</p>
+                    <p><i class="fab fa-facebook"></i> cesardarioph</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 ArteVisualenVivo & cesardarioph. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- LIGHTBOX -->
+    <div id="lightbox" class="lightbox">
+        <button id="lightbox-close" class="close-lightbox-btn">&times;</button>
+        <div class="lightbox-content">
+            <img id="lightbox-image" src="" alt="Imagen" style="display: none;">
+            <video id="lightbox-video" src="" controls style="display: none;"></video>
+            <p id="lightbox-caption"></p>
+            <button id="addToSelectionBtn" class="btn select-button">Seleccionar para Comprar</button>
+        </div>
+        <!-- Lightbox controls moved here, directly under #lightbox -->
+        <button id="lightbox-prev" class="lightbox-nav-btn">&lsaquo;</button>
+        <button id="lightbox-next" class="lightbox-nav-btn">&rsaquo;</button>
+    </div>
+
+    <!-- SELECTION PANEL (CARRITO) -->
+    <div id="selection-panel" class="selection-panel">
+        <div class="selection-header">
+            <h3>Tu Selección</h3>
+            <button id="close-selection-panel-btn" class="close-modal-btn">&times;</button>
+        </div>
+        <div class="selection-body">
+            <p id="pack-summary-message" class="pack-summary-message" style="display: none;"></p>
+            <ul id="selected-items-list">
+                <!-- Items seleccionados se cargarán aquí dinámicamente -->
+            </ul>
+        </div>
+        <div class="selection-footer">
+            <div class="selection-total" id="total-price">Total Estimado: $0</div>
+            <button id="whatsapp-btn" class="btn btn-whatsapp"><i class="fab fa-whatsapp"></i> Finalizar Compra por WhatsApp</button>
+            <!-- NEW: WhatsApp button for download link -->
+            <button id="whatsapp-download-link-btn" class="btn btn-whatsapp" style="margin-top: 10px;"><i class="fab fa-whatsapp"></i> Enviar Enlace de Descarga</button>
+            <button id="download-link-generator-btn" class="btn btn-secondary">Generar Enlace de Descarga (Admin)</button>
+            <button id="clear-selection-btn" class="btn btn-primary">Vaciar Selección</button>
+        </div>
+    </div>
+
+    <!-- PAYMENT MODAL -->
+    <div id="payment-modal" class="payment-modal">
+        <div class="payment-modal-content">
+            <h3>Confirmar Pago</h3>
+            <button id="close-payment-modal-btn" class="close-modal-btn">&times;</button>
+            
+            <div class="payment-method-toggle-container">
+                <span>Mercado Pago</span>
+                <label class="switch">
+                    <input type="checkbox" id="payment-method-toggle">
+                    <span class="slider round"></span>
+                </label>
+                <span>Transferencia Bancaria</span>
+            </div>
+
+            <div id="mercado-pago-details">
+                <h4>Paga con Mercado Pago</h4>
+                <div class="payment-details">
+                    <p><strong>Alias de Mercado Pago:</strong> cesar.dario.ph</p>
+                    <p><strong>Titular:</strong> CESAR DARIO PEREZ</p>
+                </div>
+                <p><strong>Monto Total:</strong> <span id="payment-total-amount"></span></p>
+            </div>
+
+            <div id="bank-transfer-details" style="display: none;">
+                <!-- Contenido de transferencia bancaria se actualizará dinámicamente -->
+            </div>
+
+            <button id="whatsapp-payment-btn" class="btn btn-whatsapp"><i class="fab fa-whatsapp"></i> Enviar Comprobante por WhatsApp</button>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toastNotification" class="toast"></div>
+
+    <!-- WhatsApp Floating Button -->
+    <a href="#" class="whatsapp-float-btn" id="whatsapp-float-btn">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <!-- Panel de Administración de Precios (inicialmente oculto) -->
+    <div id="admin-panel" class="admin-panel">
+        <button id="close-admin-panel-btn" class="close-modal-btn">&times;</button>
+        <div class="admin-panel-content">
+            <h2>Panel de Administración</h2>
+            <p class="subtitle">Gestiona la configuración de la tienda.</p>
+            <div class="form-group">
+                <label for="individual-photo-price">Precio Foto Individual:</label>
+                <input type="number" id="individual-photo-price" min="0" step="100">
+            </div>
+            <div class="form-group">
+                <label for="pack-20-photos-price">Precio Pack 20 Fotos:</label>
+                <input type="number" id="pack-20-photos-price" min="0" step="100">
+            </div>
+
+            <h3>Precios de Productos Sublimados</h3>
+            <div class="form-group">
+                <label for="product-select">Seleccionar Producto:</label>
+                <select id="product-select" class="filter-select">
+                    <option value="">-- Selecciona un producto --</option>
+                    <!-- Las opciones de productos se cargarán aquí dinámicamente -->
+                </select>
+            </div>
+            <div id="selected-product-price-input-container">
+                <!-- El campo de precio del producto seleccionado se mostrará aquí dinámicamente -->
+                <p class="event-placeholder">Selecciona un producto para modificar su precio.</p>
+            </div>
+
+            <button id="save-prices-btn" class="btn btn-primary">Guardar Precios</button>
+            <p id="price-update-message" class="message"></p>
+
+            <h3 id="admin-generate-link-header">Generar Enlace de Descarga por IDs</h3>
+            <div class="form-group">
+                <label for="admin-photo-ids-input">Introduce IDs de fotos (separados por comas):</label>
+                <textarea id="admin-photo-ids-input" rows="4" placeholder="Ej: foto1, foto2, foto_evento_123"></textarea>
+            </div>
+            <button id="generate-admin-download-link-btn" class="btn btn-secondary"><i class="fas fa-link"></i> Generar Enlace</button>
+            <p id="generated-download-link-output" class="message" style="display: none;"></p>
+            <div class="button-group-horizontal">
+                <button id="copy-admin-download-link-btn" class="btn btn-primary btn-sm" style="display: none;"><i class="far fa-copy"></i> Copiar Enlace</button>
+                <button id="whatsapp-admin-download-link-btn" class="btn btn-whatsapp btn-sm" style="display: none;"><i class="fab fa-whatsapp"></i> Enviar por WhatsApp</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Botón para abrir el panel de administración (opcional, podrías tenerlo oculto y abrirlo por URL) -->
+    <button id="open-admin-panel-btn" style="position: fixed; bottom: 80px; right: 20px; z-index: 999; background-color: #f0ad4e; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">Admin</button>
+
+    <!-- DOWNLOAD SECTION -->
+    <section id="download-section" class="download-section" style="display: none;">
+        <div class="container">
+            <div class="download-section-content">
+                <h2 class="section-title">Tus Fotos Listas para Descargar</h2>
+                <p class="section-subtitle">Haz clic en cada imagen para descargarla individualmente, o usa el botón para descargarlas todas de una vez.</p>
+                <button id="download-all-btn" class="btn btn-primary" style="margin-bottom: 20px;">
+                    <i class="fas fa-download"></i> Descargar Todas las Fotos
+                </button>
+                <p class="note">Nota: La descarga de múltiples archivos puede requerir confirmación en tu navegador.</p>
+                <div id="download-links-container" class="photo-grid">
+                    <!-- Las fotos/videos para descargar se cargarán aquí -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="script.js"></script>
+</body>
+</html>
