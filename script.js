@@ -1306,10 +1306,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     allProducts = category.products.map(p => {
                         const processedImages = p.images.map(img => ({
                             ...img,
-                            // CORRECCIÓN FINAL AQUÍ: Asumiendo que p.path es la ruta relativa desde 'galeria/'
-                            // Por ejemplo, si p.path es "tienda-productos/bolsas-de-friselina" y img.src es "bolsadefriselina.jfif"
-                            // La ruta final será "galeria/tienda-productos/bolsas-de-friselina/bolsadefriselina.jfif"
-                            src: `galeria/${p.path}/${img.src}`, 
+                            // CORRECCIÓN DEFINITIVA AQUÍ:
+                            // La propiedad 'src' en data.json para los productos ya incluye la ruta completa desde 'tienda-productos/'
+                            // Por lo tanto, solo necesitamos anteponer 'galeria/'.
+                            src: `galeria/${img.src}`, 
                             name: img.name || img.src.split(/[\/\\]/).pop().split('.')[0]
                         }));
 
