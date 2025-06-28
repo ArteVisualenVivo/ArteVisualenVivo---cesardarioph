@@ -19,15 +19,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const savedIndividualPrice = localStorage.getItem('individualPhotoPrice');
         const savedPackPrice = localStorage.getItem('pack20PhotosPrice');
         
-        // MODIFICACIÓN: Asegurarse de que los precios siempre sean números válidos.
+        // Asegurarse de que los precios siempre sean números válidos.
         // Si no se encuentran en localStorage o son inválidos, usar los valores por defecto de CONFIG.
-        CONFIG.PHOTO_PRICE_INDIVIDUAL = parseFloat(savedIndividualPrice);
-        if (isNaN(CONFIG.PHOTO_PRICE_INDIVIDUAL) || CONFIG.PHOTO_PRICE_INDIVIDUAL < 0) {
+        const parsedIndividualPrice = parseFloat(savedIndividualPrice);
+        if (!isNaN(parsedIndividualPrice) && parsedIndividualPrice >= 0) {
+            CONFIG.PHOTO_PRICE_INDIVIDUAL = parsedIndividualPrice;
+        } else {
             CONFIG.PHOTO_PRICE_INDIVIDUAL = 500; // Fallback a valor por defecto
         }
 
-        CONFIG.PHOTO_20_PACK = parseFloat(savedPackPrice);
-        if (isNaN(CONFIG.PHOTO_20_PACK) || CONFIG.PHOTO_20_PACK < 0) {
+        const parsedPackPrice = parseFloat(savedPackPrice);
+        if (!isNaN(parsedPackPrice) && parsedPackPrice >= 0) {
+            CONFIG.PHOTO_20_PACK = parsedPackPrice;
+        } else {
             CONFIG.PHOTO_20_PACK = 8000; // Fallback a valor por defecto
         }
         console.log("DEBUG: Precios cargados del localStorage:", { individual: CONFIG.PHOTO_PRICE_INDIVIDUAL, pack: CONFIG.PHOTO_20_PACK });
@@ -2151,8 +2155,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Este botón siempre abre un chat general de WhatsApp, sin importar el carrito.
                 window.open(`https://wa.me/${CONFIG.WHATSAPP_NUMBER}?text=${encodeURIComponent('¡Hola! Tengo una consulta general sobre sus servicios.')}`, '_blank');
             });
-            // Asegurarse de que el botón esté visible al inicio (si no está en modo descarga)
-            // La visibilidad se controla en setMainPageDisplay() y en el bloque de URL params para admin.
+            // La visibilidad inicial se maneja en la sección NEW al inicio de init().
+            // No es necesario setear el display aquí nuevamente.
         }
 
 
