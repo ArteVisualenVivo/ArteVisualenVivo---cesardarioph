@@ -243,16 +243,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (elements.selectionCount) elements.selectionCount.textContent = totalItemsInCart; // Actualiza el contador del icono del carrito
 
-        // --- INICIO DE CAMBIO IMPORTANTE PARA LA VISIBILIDAD DE LOS BOTONES ---
-        // Actualiza la visibilidad de los botones del carrito y WhatsApp flotante
+        // --- INICIO DE CAMBIO IMPORTANTE PARA LA VISIBILIDAD DEL ICONO DEL CARRITO ---
+        // Actualiza la visibilidad del icono del carrito (depende de si hay ítems)
         if (elements.selectionIcon) {
             elements.selectionIcon.style.display = totalItemsInCart > 0 ? 'block' : 'none';
             console.log(`DEBUG: selectionIcon display: ${elements.selectionIcon.style.display}`);
         }
-        if (elements.whatsappFloatBtn) {
-            elements.whatsappFloatBtn.style.display = totalItemsInCart > 0 ? 'flex' : 'none';
-            console.log(`DEBUG: whatsappFloatBtn display: ${elements.whatsappFloatBtn.style.display}`);
-        }
+        // El botón de WhatsApp flotante ahora se gestiona directamente en setMainPageDisplay
+        // para asegurar que siempre esté visible en la vista principal.
         // --- FIN DE CAMBIO IMPORTANTE ---
 
 
@@ -384,14 +382,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (selectedItems.size === 0) {
             elements.selectedItemsList.innerHTML = '<li class="empty-selection"><i class="fas fa-shopping-cart"></i><p>Tu selección está vacía.<br>¡Añade fotos o productos!</p></li>';
-            // La visibilidad de whatsappFloatBtn ya se maneja en updateSelectionUI
+            // El botón de WhatsApp flotante ya no se gestiona aquí, sino en setMainPageDisplay
             elements.packSummaryMessage.style.display = 'none'; // Ocultar mensaje del paquete
             // Deshabilitar los botones de generación de enlaces de descarga si no hay fotos seleccionadas
             elements.downloadLinkGeneratorBtn.disabled = true; 
             elements.whatsappDownloadLinkBtn.disabled = true;
             return;
         } else {
-            // La visibilidad de whatsappFloatBtn ya se maneja en updateSelectionUI
+            // El botón de WhatsApp flotante ya no se gestiona aquí, sino en setMainPageDisplay
             // Verificar si hay fotos en el carrito para habilitar los botones de enlace de descarga
             const hasPhotosInCart = Array.from(selectedItems.values()).some(item => item.type === 'photo' && item.quantity > 0);
             elements.downloadLinkGeneratorBtn.disabled = !hasPhotosInCart;
@@ -1601,11 +1599,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // IMPORTANT: Lightbox is intentionally NOT included here.
             // Its visibility is controlled independently by openLightbox/closeLightbox.
         ];
+        // MODIFICACIÓN: La lista de botones flotantes se ajusta para el comportamiento deseado.
+        // El botón de WhatsApp flotante se gestiona aquí para que siempre esté visible en la vista principal.
         const floatingButtons = [
-            elements.header, // The header acts as a floating element
-            elements.selectionIcon,
-            elements.whatsappFloatBtn
-            // EXCLUIDO: elements.openAdminPanelBtn - Su visibilidad se maneja exclusivamente en init()
+            elements.header, // El header actúa como un elemento flotante
+            elements.selectionIcon, // Su visibilidad depende del carrito
+            elements.whatsappFloatBtn // Este siempre visible en la vista principal
+            // elements.openAdminPanelBtn - Su visibilidad se maneja exclusivamente en init() y handleRouting
         ];
 
         mainSections.forEach(section => {
@@ -1625,18 +1625,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         floatingButtons.forEach(button => {
             if (button) {
-                // Special handling for selectionIcon and whatsappFloatBtn
-                // These should only be shown if there are selected items AND we are on the main view
-                const isSelectionRelated = (button === elements.selectionIcon || button === elements.whatsappFloatBtn);
-                // La visibilidad de estos botones ahora se controla primariamente por updateSelectionUI
-                // Solo los ocultamos si no estamos en la vista principal.
-                if (!showMain && isSelectionRelated) {
-                    button.style.display = 'none';
-                } else if (showMain && isSelectionRelated) {
-                    // Si estamos en la vista principal, updateSelectionUI se encargará de esto
-                    // No hacemos nada aquí para evitar sobrescribir el control de updateSelectionUI
-                } else if (button !== elements.openAdminPanelBtn) { // EXCLUIR openAdminPanelBtn
-                    button.style.display = showMain ? 'block' : 'none'; // Default behavior for other buttons
+                if (button === elements.selectionIcon) {
+                    // El icono del carrito se muestra si hay ítems Y estamos en la vista principal
+                    button.style.display = showMain && selectedItems.size > 0 ? 'block' : 'none';
+                } else if (button === elements.whatsappFloatBtn) {
+                    // El botón de WhatsApp flotante siempre se muestra si estamos en la vista principal
+                    button.style.display = showMain ? 'flex' : 'none';
+                } else if (button !== elements.openAdminPanelBtn) { // Asegurarse de no tocar el botón Admin aquí
+                    button.style.display = showMain ? 'block' : 'none';
                 }
                 console.log(`DEBUG: Floating button ${button.id || button.className} display: ${button.style.display}`);
             }
@@ -2128,20 +2124,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Floating WhatsApp Button
-        // NOTA: La visibilidad de este botón se gestiona ahora principalmente en updateSelectionUI()
-        // para que aparezca/desaparezca dinámicamente con los ítems del carrito.
-        if (elements.whatsappFloatBtn) elements.whatsappFloatBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (selectedItems.size > 0) {
-                if (elements.paymentModal) elements.paymentModal.classList.add('open');
-                elements.paymentModal.style.display = 'flex'; // Ensure it becomes flex when opened
-                setBodyNoScroll();
-                togglePaymentDetails(true);
-                if (elements.paymentMethodToggle) elements.paymentMethodToggle.checked = false;
-            } else {
-                window.open(`https://wa.me/${CONFIG.WHATSAPP_NUMBER}?text=${encodeURIComponent('¡Hola! Me gustaría hacer una consulta sobre sus servicios.')}`, '_blank');
-            }
-        });
+        // MODIFICACIÓN: El botón de WhatsApp flotante siempre debe estar visible.
+        if (elements.whatsappFloatBtn) {
+            elements.whatsappFloatBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                // Si hay ítems en el carrito, abrimos el modal de pago.
+                // Si no hay ítems, abrimos un chat general de WhatsApp.
+                if (selectedItems.size > 0) {
+                    if (elements.paymentModal) elements.paymentModal.classList.add('open');
+                    elements.paymentModal.style.display = 'flex'; // Ensure it becomes flex when opened
+                    setBodyNoScroll();
+                    togglePaymentDetails(true);
+                    if (elements.paymentMethodToggle) elements.paymentMethodToggle.checked = false;
+                } else {
+                    window.open(`https://wa.me/${CONFIG.WHATSAPP_NUMBER}?text=${encodeURIComponent('¡Hola! Me gustaría hacer una consulta sobre sus servicios.')}`, '_blank');
+                }
+            });
+            // Asegurarse de que el botón esté visible al inicio
+            elements.whatsappFloatBtn.style.display = 'flex';
+        }
+
 
         // Payment Modal
         if (elements.closePaymentModalBtn) elements.closePaymentModalBtn.addEventListener('click', () => {
