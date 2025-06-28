@@ -401,14 +401,21 @@
             <div class="admin-section">
                 <h3>Precios de Fotos y Videos</h3>
                 <div class="form-group">
-                    <label for="individual-photo-price">Precio Foto Individual:</label>
-                    <input type="number" id="individual-photo-price" min="0" step="100">
+                    <label for="photo-price-tier-1">Precio por foto (1 unidad):</label>
+                    <input type="number" id="photo-price-tier-1" min="0" step="100">
                 </div>
                 <div class="form-group">
-                    <label for="pack-20-photos-price">Precio Pack 20 Fotos:</label>
-                    <input type="number" id="pack-20-photos-price" min="0" step="100">
+                    <label for="photo-price-tier-2">Precio por foto (2 a 10 unidades):</label>
+                    <input type="number" id="photo-price-tier-2" min="0" step="100">
                 </div>
-                <!-- NUEVO BOTÓN PARA GUARDAR PRECIOS DE FOTOS -->
+                <div class="form-group">
+                    <label for="photo-price-tier-3">Precio por foto (11 a 20 unidades):</label>
+                    <input type="number" id="photo-price-tier-3" min="0" step="100">
+                </div>
+                <div class="form-group">
+                    <label for="photo-price-tier-4">Precio por foto (21 o más unidades):</label>
+                    <input type="number" id="photo-price-tier-4" min="0" step="100">
+                </div>
                 <button id="save-photo-prices-btn" class="btn btn-primary admin-btn">Guardar Precios de Fotos</button>
             </div>
 
@@ -426,7 +433,6 @@
                     <!-- El campo de precio del producto seleccionado se mostrará aquí dinámicamente -->
                     <p class="event-placeholder">Selecciona un producto para modificar su precio.</p>
                 </div>
-                <!-- BOTÓN PARA GUARDAR PRECIOS DE PRODUCTOS (ID CAMBIADO) -->
                 <button id="save-product-prices-btn" class="btn btn-primary admin-btn">Guardar Precio de Producto</button>
             </div>
 
