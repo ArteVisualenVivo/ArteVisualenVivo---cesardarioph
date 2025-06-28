@@ -243,15 +243,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (elements.selectionCount) elements.selectionCount.textContent = totalItemsInCart; // Actualiza el contador del icono del carrito
 
-        // --- INICIO DE CAMBIO IMPORTANTE PARA LA VISIBILIDAD DEL ICONO DEL CARRITO ---
         // Actualiza la visibilidad del icono del carrito (depende de si hay ítems)
         if (elements.selectionIcon) {
             elements.selectionIcon.style.display = totalItemsInCart > 0 ? 'block' : 'none';
             console.log(`DEBUG: selectionIcon display: ${elements.selectionIcon.style.display}`);
         }
-        // El botón de WhatsApp flotante ahora se gestiona directamente en setMainPageDisplay
+        // El botón de WhatsApp flotante ya no se gestiona aquí, sino en setMainPageDisplay
         // para asegurar que siempre esté visible en la vista principal.
-        // --- FIN DE CAMBIO IMPORTANTE ---
 
 
         const { total, photoCount } = calculateTotalPrice(); // Recalcula el total y el recuento de fotos
@@ -1601,7 +1599,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ];
         // MODIFICACIÓN: La lista de botones flotantes se ajusta para el comportamiento deseado.
         // El botón de WhatsApp flotante se gestiona aquí para que siempre esté visible en la vista principal.
-        const floatingButtons = [
+        const floatingElements = [
             elements.header, // El header actúa como un elemento flotante
             elements.selectionIcon, // Su visibilidad depende del carrito
             elements.whatsappFloatBtn // Este siempre visible en la vista principal
@@ -1623,18 +1621,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        floatingButtons.forEach(button => {
-            if (button) {
-                if (button === elements.selectionIcon) {
+        floatingElements.forEach(element => {
+            if (element) {
+                if (element === elements.selectionIcon) {
                     // El icono del carrito se muestra si hay ítems Y estamos en la vista principal
-                    button.style.display = showMain && selectedItems.size > 0 ? 'block' : 'none';
-                } else if (button === elements.whatsappFloatBtn) {
+                    element.style.display = showMain && selectedItems.size > 0 ? 'block' : 'none';
+                } else if (element === elements.whatsappFloatBtn) {
                     // El botón de WhatsApp flotante siempre se muestra si estamos en la vista principal
-                    button.style.display = showMain ? 'flex' : 'none';
-                } else if (button !== elements.openAdminPanelBtn) { // Asegurarse de no tocar el botón Admin aquí
-                    button.style.display = showMain ? 'block' : 'none';
+                    element.style.display = showMain ? 'flex' : 'none';
+                } else if (element !== elements.openAdminPanelBtn) { // Asegurarse de no tocar el botón Admin aquí
+                    element.style.display = showMain ? 'block' : 'none';
                 }
-                console.log(`DEBUG: Floating button ${button.id || button.className} display: ${button.style.display}`);
+                console.log(`DEBUG: Floating element ${element.id || element.className} display: ${element.style.display}`);
             }
         });
         // IMPORTANTE: Después de este bucle, siempre llamamos a updateSelectionUI()
@@ -2123,22 +2121,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (elements.paymentMethodToggle) elements.paymentMethodToggle.checked = false;
         });
 
-        // Floating WhatsApp Button
-        // MODIFICACIÓN: El botón de WhatsApp flotante siempre debe estar visible.
+        // Floating WhatsApp Button (MODIFICADO)
         if (elements.whatsappFloatBtn) {
             elements.whatsappFloatBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                // Si hay ítems en el carrito, abrimos el modal de pago.
-                // Si no hay ítems, abrimos un chat general de WhatsApp.
-                if (selectedItems.size > 0) {
-                    if (elements.paymentModal) elements.paymentModal.classList.add('open');
-                    elements.paymentModal.style.display = 'flex'; // Ensure it becomes flex when opened
-                    setBodyNoScroll();
-                    togglePaymentDetails(true);
-                    if (elements.paymentMethodToggle) elements.paymentMethodToggle.checked = false;
-                } else {
-                    window.open(`https://wa.me/${CONFIG.WHATSAPP_NUMBER}?text=${encodeURIComponent('¡Hola! Me gustaría hacer una consulta sobre sus servicios.')}`, '_blank');
-                }
+                // Este botón siempre abre un chat general de WhatsApp, sin importar el carrito.
+                window.open(`https://wa.me/${CONFIG.WHATSAPP_NUMBER}?text=${encodeURIComponent('¡Hola! Tengo una consulta general sobre sus servicios.')}`, '_blank');
             });
             // Asegurarse de que el botón esté visible al inicio
             elements.whatsappFloatBtn.style.display = 'flex';
@@ -2234,10 +2222,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Check if the click occurred outside the modal content AND outside the buttons that open it
                 const isClickOutsideContent = !modalContent.contains(event.target);
                 const isClickOnWhatsappBtn = elements.whatsappBtn && elements.whatsappBtn.contains(event.target); // The button from cart that opens this modal
-                const isClickOnWhatsappFloatBtn = elements.whatsappFloatBtn && elements.whatsappFloatBtn.contains(event.target); // The floating button that also opens this modal
+                // MODIFICACIÓN: Ya no se considera el whatsappFloatBtn aquí para evitar conflictos
                 
-                // If the click is directly on the modal backdrop, or outside both the content AND the buttons that open it
-                if (event.target === elements.paymentModal || (isClickOutsideContent && !isClickOnWhatsappBtn && !isClickOnWhatsappFloatBtn)) {
+                // If the click is directly on the modal backdrop, or outside both the content AND the button that opens it
+                if (event.target === elements.paymentModal || (isClickOutsideContent && !isClickOnWhatsappBtn)) {
                     console.log("DEBUG: Click outside payment modal, closing.");
                     if (elements.paymentModal) elements.paymentModal.classList.remove('open');
                     elements.paymentModal.style.display = 'none'; // Explicitly hide
