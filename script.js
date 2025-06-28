@@ -7,8 +7,11 @@ document.addEventListener('DOMContentLoaded', () => {
         ITEMS_PER_PAGE: 72,
 
         // Valores por defecto para los precios de fotos (serán sobrescritos por localStorage)
-        PHOTO_PRICE_INDIVIDUAL: 500,
-        PHOTO_PRICE_20_PACK: 8000,
+        // AHORA SON PRECIOS POR TRAMOS
+        PHOTO_PRICE_TIER_1: 1000, // 1 unidad
+        PHOTO_PRICE_TIER_2: 900,  // 2 a 10 unidades
+        PHOTO_PRICE_TIER_3: 800,  // 11 a 20 unidades
+        PHOTO_PRICE_TIER_4: 700,  // 21 o más unidades
 
         // Alias de Mercado Pago (lo usaremos también para la transferencia bancaria)
         MERCADO_PAGO_ALIAS: 'cesar.dario.ph'
@@ -16,25 +19,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Cargar precios de fotos guardados de localStorage al inicio
     function loadPhotoPricesFromLocalStorage() {
-        const savedIndividualPrice = localStorage.getItem('individualPhotoPrice');
-        const savedPackPrice = localStorage.getItem('pack20PhotosPrice');
+        // Cargar los precios de los nuevos tramos
+        const savedTier1Price = localStorage.getItem('photoPriceTier1');
+        const savedTier2Price = localStorage.getItem('photoPriceTier2');
+        const savedTier3Price = localStorage.getItem('photoPriceTier3');
+        const savedTier4Price = localStorage.getItem('photoPriceTier4');
         
-        // Asegurarse de que los precios siempre sean números válidos.
-        // Si no se encuentran en localStorage o son inválidos, usar los valores por defecto de CONFIG.
-        const parsedIndividualPrice = parseFloat(savedIndividualPrice);
-        if (!isNaN(parsedIndividualPrice) && parsedIndividualPrice >= 0) {
-            CONFIG.PHOTO_PRICE_INDIVIDUAL = parsedIndividualPrice;
-        } else {
-            CONFIG.PHOTO_PRICE_INDIVIDUAL = 500; // Fallback a valor por defecto
-        }
+        // Función auxiliar para parsear y validar precios
+        const parseAndValidatePrice = (savedPrice, defaultValue) => {
+            const parsedPrice = parseFloat(savedPrice);
+            return (!isNaN(parsedPrice) && parsedPrice >= 0) ? parsedPrice : defaultValue;
+        };
 
-        const parsedPackPrice = parseFloat(savedPackPrice);
-        if (!isNaN(parsedPackPrice) && parsedPackPrice >= 0) {
-            CONFIG.PHOTO_20_PACK = parsedPackPrice;
-        } else {
-            CONFIG.PHOTO_20_PACK = 8000; // Fallback a valor por defecto
-        }
-        console.log("DEBUG: Precios cargados del localStorage:", { individual: CONFIG.PHOTO_PRICE_INDIVIDUAL, pack: CONFIG.PHOTO_20_PACK });
+        CONFIG.PHOTO_PRICE_TIER_1 = parseAndValidatePrice(savedTier1Price, 1000);
+        CONFIG.PHOTO_PRICE_TIER_2 = parseAndValidatePrice(savedTier2Price, 900);
+        CONFIG.PHOTO_PRICE_TIER_3 = parseAndValidatePrice(savedTier3Price, 800);
+        CONFIG.PHOTO_PRICE_TIER_4 = parseAndValidatePrice(savedTier4Price, 700);
+
+        console.log("DEBUG: Precios de fotos por tramos cargados del localStorage:", { 
+            tier1: CONFIG.PHOTO_PRICE_TIER_1, 
+            tier2: CONFIG.PHOTO_PRICE_TIER_2, 
+            tier3: CONFIG.PHOTO_PRICE_TIER_3, 
+            tier4: CONFIG.PHOTO_PRICE_TIER_4 
+        });
     }
     loadPhotoPricesFromLocalStorage(); // Cargar los precios de fotos al inicio
 
@@ -157,16 +164,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Admin Panel (NEW elements for Download Link Generation)
         adminPanel: document.getElementById('admin-panel'),
-        openAdminPanelBtn: document.getElementById('open-admin-panel-btn'), // <-- ESTE ES EL BOTÓN "ADMIN"
+        openAdminPanelBtn: document.getElementById('open-admin-panel-btn'), 
         closeAdminPanelBtn: document.getElementById('close-admin-panel-btn'),
-        individualPhotoPriceInput: document.getElementById('individual-photo-price'),
-        pack20PhotosPriceInput: document.getElementById('pack-20-photos-price'),
         
-        // NEW: Separate save button for photo prices
-        savePhotoPricesBtn: document.getElementById('save-photo-prices-btn'), // New ID for photo prices button
-
-        // NEW: Separate save button for product prices
-        saveProductPricesBtn: document.getElementById('save-product-prices-btn'), // New ID for product prices button
+        // REVISADO: Referencias a los nuevos campos de precios por tramos
+        photoPriceTier1Input: document.getElementById('photo-price-tier-1'),
+        photoPriceTier2Input: document.getElementById('photo-price-tier-2'),
+        photoPriceTier3Input: document.getElementById('photo-price-tier-3'),
+        photoPriceTier4Input: document.getElementById('photo-price-tier-4'),
+        
+        // Botones de guardar precios
+        savePhotoPricesBtn: document.getElementById('save-photo-prices-btn'), 
+        saveProductPricesBtn: document.getElementById('save-product-prices-btn'), 
 
         priceUpdateMessage: document.getElementById('price-update-message'), // Shared message for price updates
         productSelect: document.getElementById('product-select'),
@@ -218,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * Calcula el precio total de la selección de fotos y productos.
-     * La lógica del paquete de 20 fotos solo aplica a las fotos.
+     * AHORA APLICA LA LÓGICA DE PRECIOS POR TRAMOS PARA LAS FOTOS.
      * @returns {{total: number, photoCount: number}} El precio total y el recuento de fotos.
      */
     function calculateTotalPrice() {
@@ -234,14 +243,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Aplicar lógica de precios de fotos
+        // Aplicar lógica de precios por tramos para las fotos
         if (photoCount > 0) {
-            const packPriceThreshold = 20;
-            const packCount = Math.floor(photoCount / packPriceThreshold);
-            const remainingPhotos = photoCount % packPriceThreshold;
+            let pricePerPhoto = CONFIG.PHOTO_PRICE_TIER_1; // Precio por defecto para 1 foto
 
-            total += packCount * CONFIG.PHOTO_20_PACK; 
-            total += remainingPhotos * CONFIG.PHOTO_PRICE_INDIVIDUAL; 
+            if (photoCount >= 2 && photoCount <= 10) {
+                pricePerPhoto = CONFIG.PHOTO_PRICE_TIER_2;
+            } else if (photoCount >= 11 && photoCount <= 20) {
+                pricePerPhoto = CONFIG.PHOTO_PRICE_TIER_3;
+            } else if (photoCount >= 21) {
+                pricePerPhoto = CONFIG.PHOTO_PRICE_TIER_4;
+            }
+            total += photoCount * pricePerPhoto;
         }
         
         return { total, photoCount };
@@ -442,12 +455,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 const itemInfo = document.createElement('div');
                 itemInfo.className = 'selected-item-info';
                 // Mostrar la cantidad actual y el precio total de esa cantidad de fotos
+                // AHORA USA EL PRECIO POR TRAMOS PARA MOSTRAR EL PRECIO UNITARIO
+                let displayPricePerPhoto = CONFIG.PHOTO_PRICE_TIER_1;
+                if (itemInCart.quantity >= 2 && itemInCart.quantity <= 10) {
+                    displayPricePerPhoto = CONFIG.PHOTO_PRICE_TIER_2;
+                } else if (itemInCart.quantity >= 11 && itemInCart.quantity <= 20) {
+                    displayPricePerPhoto = CONFIG.PHOTO_PRICE_TIER_3;
+                } else if (itemInCart.quantity >= 21) {
+                    displayPricePerPhoto = CONFIG.PHOTO_PRICE_TIER_4;
+                }
                 itemInfo.innerHTML = `
                     <h5>${item.name || `Foto ${item.id}`}</h5>
-                    <p class="item-price">${formatCurrency(CONFIG.PHOTO_PRICE_INDIVIDUAL * itemInCart.quantity)}</p>
+                    <p class="item-price">${formatCurrency(displayPricePerPhoto)} c/u</p>
                 `;
 
-                // INICIO DE MODIFICACIÓN - Controles de cantidad para fotos (NUEVO)
+                // Controles de cantidad para fotos
                 const quantityControl = document.createElement('div');
                 quantityControl.className = 'quantity-control';
                 quantityControl.innerHTML = `
@@ -456,30 +478,28 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button class="quantity-plus-btn" data-id="${item.id}" data-type="photo">+</button>
                 `;
 
-                // Añadir listeners a los botones de cantidad (NUEVO)
-                // *** CORRECCIÓN: Añadir e.stopPropagation() aquí ***
+                // Añadir listeners a los botones de cantidad
                 quantityControl.querySelector('.quantity-minus-btn').addEventListener('click', (e) => {
-                    e.stopPropagation(); // Evita que el clic cierre el panel
+                    e.stopPropagation(); 
                     updateItemQuantity(item.id, null, -1, 'photo');
                 });
                 quantityControl.querySelector('.quantity-plus-btn').addEventListener('click', (e) => {
-                    e.stopPropagation(); // Evita que el clic cierre el panel
+                    e.stopPropagation(); 
                     updateItemQuantity(item.id, null, 1, 'photo');
                 });
-                // FIN DE MODIFICACIÓN
 
                 const removeButton = document.createElement('button');
                 removeButton.className = 'remove-item-btn';
                 removeButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
                 removeButton.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    removeItemFromCart(item.id, 'photo'); // Llama a removeItemFromCart que ahora es más simple
+                    removeItemFromCart(item.id, 'photo'); 
                     showToast(`"${item.name || `Foto ${item.id}`}" eliminada.`, 'info');
                 });
 
                 listItem.appendChild(itemImage);
                 listItem.appendChild(itemInfo);
-                listItem.appendChild(quantityControl); // <-- IMPORTANTE: Asegúrate de añadir este control de cantidad
+                listItem.appendChild(quantityControl); 
                 listItem.appendChild(removeButton);
                 elements.selectedItemsList.appendChild(listItem);
             });
@@ -520,13 +540,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button class="quantity-plus-btn" data-parent-id="${product.id}" data-image-id="${selectedImage.id}" data-type="product">+</button>
                 `;
                 // Añadir listeners a los botones de cantidad
-                // *** CORRECCIÓN: Añadir e.stopPropagation() aquí ***
                 quantityControl.querySelector('.quantity-minus-btn').addEventListener('click', (e) => {
-                    e.stopPropagation(); // Evita que el clic cierre el panel
+                    e.stopPropagation(); 
                     updateItemQuantity(product.id, selectedImage.id, -1, 'product');
                 });
                 quantityControl.querySelector('.quantity-plus-btn').addEventListener('click', (e) => {
-                    e.stopPropagation(); // Evita que el clic cierre el panel
+                    e.stopPropagation(); 
                     updateItemQuantity(product.id, selectedImage.id, 1, 'product');
                 });
 
@@ -550,16 +569,23 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Mensaje del paquete de fotos (solo aplica si hay fotos)
-        const { photoCount } = calculateTotalPrice(); // Obtener el recuento real de fotos
-        if (photoCount >= 20) {
-            elements.packSummaryMessage.innerHTML = `¡Genial! Tienes <strong>${photoCount} fotos</strong> seleccionadas. Se aplicará el precio de pack por cada 20 fotos y el resto se cobrará individualmente.`;
-            elements.packSummaryMessage.style.display = 'block';
-        } else if (photoCount > 0) {
-            elements.packSummaryMessage.innerHTML = `Tienes <strong>${20 - photoCount} fotos más</strong> para activar el precio de pack y ahorrar.`;
+        // Mensaje del paquete de fotos (AHORA SE ADAPTA A LOS TRAMOS)
+        const { photoCount } = calculateTotalPrice(); 
+        if (photoCount > 0) {
+            let message = `Tienes <strong>${photoCount} fotos</strong> seleccionadas.`;
+            if (photoCount < 2) {
+                message += ` Precio individual: ${formatCurrency(CONFIG.PHOTO_PRICE_TIER_1)}.`;
+            } else if (photoCount >= 2 && photoCount <= 10) {
+                message += ` Precio por unidad: ${formatCurrency(CONFIG.PHOTO_PRICE_TIER_2)}.`;
+            } else if (photoCount >= 11 && photoCount <= 20) {
+                message += ` Precio por unidad: ${formatCurrency(CONFIG.PHOTO_PRICE_TIER_3)}.`;
+            } else if (photoCount >= 21) {
+                message += ` Precio por unidad: ${formatCurrency(CONFIG.PHOTO_PRICE_TIER_4)}.`;
+            }
+            elements.packSummaryMessage.innerHTML = message;
             elements.packSummaryMessage.style.display = 'block';
         } else {
-            elements.packSummaryMessage.style.display = 'none'; // Si no hay fotos, ocultar el mensaje
+            elements.packSummaryMessage.style.display = 'none'; 
         }
     }
 
@@ -1098,7 +1124,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Verificar si el producto (la primera variante por defecto) está en el carrito para la clase 'selected'
             const productHasAnyVariantInCart = Array.from(selectedItems.keys()).some(key => key.startsWith(`product_${product.id}_`));
-            if (productHasAnyVariantInCart) {
+            if (productHasAnyAnyVariantInCart) {
                 card.classList.add('selected');
             }
 
@@ -1429,9 +1455,12 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.adminPanel.style.display = 'flex'; // Use flex so content respects flex-direction in CSS
         setBodyNoScroll();
 
-        // Populate and clear inputs
-        if (elements.individualPhotoPriceInput) elements.individualPhotoPriceInput.value = CONFIG.PHOTO_PRICE_INDIVIDUAL;
-        if (elements.pack20PhotosPriceInput) elements.pack20PhotosPriceInput.value = CONFIG.PHOTO_20_PACK;
+        // Populate and clear inputs for photo prices
+        if (elements.photoPriceTier1Input) elements.photoPriceTier1Input.value = CONFIG.PHOTO_PRICE_TIER_1;
+        if (elements.photoPriceTier2Input) elements.photoPriceTier2Input.value = CONFIG.PHOTO_PRICE_TIER_2;
+        if (elements.photoPriceTier3Input) elements.photoPriceTier3Input.value = CONFIG.PHOTO_PRICE_TIER_3;
+        if (elements.photoPriceTier4Input) elements.photoPriceTier4Input.value = CONFIG.PHOTO_PRICE_TIER_4;
+
         if (elements.priceUpdateMessage) elements.priceUpdateMessage.textContent = ''; // Clear previous message
         populateProductSelect();
 
@@ -1468,22 +1497,31 @@ document.addEventListener('DOMContentLoaded', () => {
      * Esta función es nueva y maneja solo los precios de las fotos.
      */
     function savePhotoPrices() {
-        const individualPrice = parseFloat(elements.individualPhotoPriceInput ? elements.individualPhotoPriceInput.value : '');
-        const packPrice = parseFloat(elements.pack20PhotosPriceInput ? elements.pack20PhotosPriceInput.value : '');
+        const tier1Price = parseFloat(elements.photoPriceTier1Input ? elements.photoPriceTier1Input.value : '');
+        const tier2Price = parseFloat(elements.photoPriceTier2Input ? elements.photoPriceTier2Input.value : '');
+        const tier3Price = parseFloat(elements.photoPriceTier3Input ? elements.photoPriceTier3Input.value : '');
+        const tier4Price = parseFloat(elements.photoPriceTier4Input ? elements.photoPriceTier4Input.value : '');
 
-        if (isNaN(individualPrice) || individualPrice < 0 || isNaN(packPrice) || packPrice < 0) {
+        if (isNaN(tier1Price) || tier1Price < 0 || 
+            isNaN(tier2Price) || tier2Price < 0 || 
+            isNaN(tier3Price) || tier3Price < 0 || 
+            isNaN(tier4Price) || tier4Price < 0) {
             if (elements.priceUpdateMessage) {
-                elements.priceUpdateMessage.textContent = 'Por favor, introduce números positivos válidos para los precios de las fotos.';
+                elements.priceUpdateMessage.textContent = 'Por favor, introduce números positivos válidos para todos los precios de las fotos.';
                 elements.priceUpdateMessage.style.color = 'var(--accent-color)';
             }
             return;
         }
 
-        CONFIG.PHOTO_PRICE_INDIVIDUAL = individualPrice;
-        CONFIG.PHOTO_20_PACK = packPrice;
+        CONFIG.PHOTO_PRICE_TIER_1 = tier1Price;
+        CONFIG.PHOTO_PRICE_TIER_2 = tier2Price;
+        CONFIG.PHOTO_PRICE_TIER_3 = tier3Price;
+        CONFIG.PHOTO_PRICE_TIER_4 = tier4Price;
 
-        localStorage.setItem('individualPhotoPrice', individualPrice);
-        localStorage.setItem('pack20PhotosPrice', packPrice);
+        localStorage.setItem('photoPriceTier1', tier1Price);
+        localStorage.setItem('photoPriceTier2', tier2Price);
+        localStorage.setItem('photoPriceTier3', tier3Price);
+        localStorage.setItem('photoPriceTier4', tier4Price);
 
         if (elements.priceUpdateMessage) {
             elements.priceUpdateMessage.textContent = 'Precios de fotos guardados correctamente.';
