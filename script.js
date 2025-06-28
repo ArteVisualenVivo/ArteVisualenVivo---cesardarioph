@@ -1113,7 +1113,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Verificar si el producto (la primera variante por defecto) está en el carrito para la clase 'selected'
             const productHasAnyVariantInCart = Array.from(selectedItems.keys()).some(key => key.startsWith(`product_${product.id}_`));
-            if (productHasAnyVariantInCart) { // <-- CORRECCIÓN: Cambiado de productHasAnyAnyVariantInCart a productHasAnyVariantInCart
+            if (productHasAnyVariantInCart) { 
                 card.classList.add('selected');
             }
 
@@ -1306,7 +1306,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     allProducts = category.products.map(p => {
                         const processedImages = p.images.map(img => ({
                             ...img,
-                            src: `galeria/${category.path}/${p.path.split('/').pop()}/${img.src.split('/').pop()}`, // Construct path
+                            // CORRECCIÓN CLAVE AQUÍ: Asegurar que la ruta de la imagen del producto se construye correctamente.
+                            // Asume que p.path es la subcarpeta del producto dentro de la categoría y img.src es el nombre del archivo.
+                            src: `galeria/${category.path}/${p.path}/${img.src}`, 
                             name: img.name || img.src.split(/[\/\\]/).pop().split('.')[0]
                         }));
 
@@ -1323,6 +1325,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             src: processedImages.length > 0 ? processedImages[0].src : 'https://placehold.co/400x300/cccccc/333333?text=No+Imagen'
                         };
                     });
+                    console.log("DEBUG: allProducts processed with paths:", allProducts.map(p => p.images[0]?.src || 'N/A')); // Added for debugging
                 } else {
                     // Process event content to add 'galeria/' prefix
                     const processedEventContent = category.content.map(item => ({
