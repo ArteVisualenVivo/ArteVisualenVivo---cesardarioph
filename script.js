@@ -1306,9 +1306,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     allProducts = category.products.map(p => {
                         const processedImages = p.images.map(img => ({
                             ...img,
-                            // CORRECCIÓN CLAVE AQUÍ: Asegurar que la ruta de la imagen del producto se construye correctamente.
-                            // Asume que p.path es la subcarpeta del producto dentro de la categoría y img.src es el nombre del archivo.
-                            src: `galeria/${category.path}/${p.path}/${img.src}`, 
+                            // CORRECCIÓN FINAL AQUÍ: Asumiendo que p.path es la ruta relativa desde 'galeria/'
+                            // Por ejemplo, si p.path es "tienda-productos/bolsas-de-friselina" y img.src es "bolsadefriselina.jfif"
+                            // La ruta final será "galeria/tienda-productos/bolsas-de-friselina/bolsadefriselina.jfif"
+                            src: `galeria/${p.path}/${img.src}`, 
                             name: img.name || img.src.split(/[\/\\]/).pop().split('.')[0]
                         }));
 
