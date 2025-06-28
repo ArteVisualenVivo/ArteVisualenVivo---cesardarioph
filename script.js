@@ -552,19 +552,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 listItem.appendChild(itemImage);
                 listItem.appendChild(itemInfo);
-                listItem.appendChild(quantityControl); // Añadir control de cantidad
-
-                const removeButton = document.createElement('button');
-                removeButton.className = 'remove-item-btn';
-                removeButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
-                removeButton.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    removeItemFromCart(product.id, 'product', selectedImage.id); // Pasar ID de producto e ID de imagen
-                    showToast(`"${product.name} (${selectedImage.name || `Modelo ${selectedImage.id}`})" eliminado.`, 'info');
-                });
+                listItem.appendChild(quantityControl); 
                 listItem.appendChild(removeButton);
-
-
                 elements.selectedItemsList.appendChild(listItem);
             });
         }
@@ -1124,7 +1113,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Verificar si el producto (la primera variante por defecto) está en el carrito para la clase 'selected'
             const productHasAnyVariantInCart = Array.from(selectedItems.keys()).some(key => key.startsWith(`product_${product.id}_`));
-            if (productHasAnyAnyVariantInCart) {
+            if (productHasAnyVariantInCart) { // <-- CORRECCIÓN: Cambiado de productHasAnyAnyVariantInCart a productHasAnyVariantInCart
                 card.classList.add('selected');
             }
 
