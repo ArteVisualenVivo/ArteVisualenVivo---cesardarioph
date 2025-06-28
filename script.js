@@ -165,8 +165,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // NEW: Separate save button for photo prices
         savePhotoPricesBtn: document.getElementById('save-photo-prices-btn'), // New ID for photo prices button
 
-        // Old save prices button (will still handle product prices for now)
-        savePricesBtn: document.getElementById('save-prices-btn'), 
+        // NEW: Separate save button for product prices
+        saveProductPricesBtn: document.getElementById('save-product-prices-btn'), // New ID for product prices button
 
         priceUpdateMessage: document.getElementById('price-update-message'), // Shared message for price updates
         productSelect: document.getElementById('product-select'),
@@ -1495,36 +1495,27 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSelectionUI(); // Recalculate cart total with new photo prices
     }
 
-    // La función 'savePrices' original (que guarda ambos) se mantiene por ahora.
-    // En un paso posterior, la modificaremos para que solo guarde los precios de productos.
-    function savePrices() {
-        // 1. Save photo prices (this logic will be moved to savePhotoPrices() later)
-        const individualPrice = parseFloat(elements.individualPhotoPriceInput ? elements.individualPhotoPriceInput.value : '');
-        const packPrice = parseFloat(elements.pack20PhotosPriceInput ? elements.pack20PhotosPriceInput.value : '');
-
-        if (isNaN(individualPrice) || individualPrice < 0 || isNaN(packPrice) || packPrice < 0) {
+    /**
+     * Guarda el precio del producto seleccionado.
+     * Esta función es nueva y maneja solo el precio del producto seleccionado.
+     */
+    function saveProductPrices() {
+        const selectedProductId = elements.productSelect ? elements.productSelect.value : null;
+        if (!selectedProductId) {
             if (elements.priceUpdateMessage) {
-                elements.priceUpdateMessage.textContent = 'Please enter valid positive numbers for photo prices.';
+                elements.priceUpdateMessage.textContent = 'Por favor, selecciona un producto para guardar su precio.';
                 elements.priceUpdateMessage.style.color = 'var(--accent-color)';
             }
             return;
         }
 
-        CONFIG.PHOTO_PRICE_INDIVIDUAL = individualPrice;
-        CONFIG.PHOTO_20_PACK = packPrice;
-
-        localStorage.setItem('individualPhotoPrice', individualPrice);
-        localStorage.setItem('pack20PhotosPrice', packPrice);
-
-        // 2. Save product price (only for the currently selected product)
-        const selectedProductId = elements.productSelect ? elements.productSelect.value : null;
-        if (selectedProductId && elements.selectedProductPriceInputContainer) {
+        if (elements.selectedProductPriceInputContainer) {
             const productPriceInput = elements.selectedProductPriceInputContainer.querySelector(`input[data-product-id="${selectedProductId}"]`);
             if (productPriceInput) {
                 const newPrice = parseFloat(productPriceInput.value);
                 if (isNaN(newPrice) || newPrice < 0) {
                     if (elements.priceUpdateMessage) {
-                        elements.priceUpdateMessage.textContent = 'Please enter a valid positive number for the selected product.';
+                        elements.priceUpdateMessage.textContent = 'Por favor, introduce un número positivo válido para el precio del producto seleccionado.';
                         elements.priceUpdateMessage.style.color = 'var(--accent-color)';
                     }
                     productPriceInput.style.borderColor = 'var(--accent-color)'; // Highlight error
@@ -1535,20 +1526,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         productToUpdate.price = newPrice;
                         localStorage.setItem(`productPrice_${selectedProductId}`, newPrice);
                         productPriceInput.style.borderColor = ''; // Clear error highlight
+                        if (elements.priceUpdateMessage) {
+                            elements.priceUpdateMessage.textContent = 'Precio del producto guardado correctamente.';
+                            elements.priceUpdateMessage.style.color = 'var(--whatsapp-color)';
+                            setTimeout(() => {
+                                if (elements.priceUpdateMessage) elements.priceUpdateMessage.textContent = '';
+                            }, 3000);
+                        }
+                        updateSelectionUI(); // Recalculate cart total with new product prices
                     }
                 }
             }
         }
-
-        if (elements.priceUpdateMessage) {
-            elements.priceUpdateMessage.textContent = 'Prices saved successfully.';
-            elements.priceUpdateMessage.style.color = 'var(--whatsapp-color)';
-            setTimeout(() => {
-                if (elements.priceUpdateMessage) elements.priceUpdateMessage.textContent = '';
-            }, 3000);
-        }
-
-        updateSelectionUI(); // Recalculate cart total with new prices (both photos and products)
     }
 
     /**
@@ -2196,11 +2185,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.openAdminPanelBtn) elements.openAdminPanelBtn.addEventListener('click', openAdminPanel);
         if (elements.closeAdminPanelBtn) elements.closeAdminPanelBtn.addEventListener('click', closeAdminPanel);
         
-        // NEW: Listener for the new "Guardar Precios de Fotos" button
+        // Listener for the new "Guardar Precios de Fotos" button
         if (elements.savePhotoPricesBtn) elements.savePhotoPricesBtn.addEventListener('click', savePhotoPrices);
 
-        // Listener for the old "Guardar Precios" button (still handles products and photos for now)
-        if (elements.savePricesBtn) elements.savePricesBtn.addEventListener('click', savePrices);
+        // Listener for the new "Guardar Precio de Producto" button
+        if (elements.saveProductPricesBtn) elements.saveProductPricesBtn.addEventListener('click', saveProductPrices);
 
 
         // Listener for product selection dropdown in admin panel
@@ -2288,12 +2277,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isClickOnCopyAdminLinkBtn = elements.copyAdminDownloadLinkBtn && elements.copyAdminDownloadLinkBtn.contains(event.target);
                 const isClickOnWhatsappAdminLinkBtn = elements.whatsappAdminDownloadLinkBtn && elements.whatsappAdminDownloadLinkBtn.contains(event.target);
                 const isClickOnSavePhotoPricesBtn = elements.savePhotoPricesBtn && elements.savePhotoPricesBtn.contains(event.target); // NEW
-                const isClickOnSavePricesBtn = elements.savePricesBtn && elements.savePricesBtn.contains(event.target); // Old button
+                const isClickOnSaveProductPricesBtn = elements.saveProductPricesBtn && elements.saveProductPricesBtn.contains(event.target); // NEW
                 const isClickOnProductSelect = elements.productSelect && elements.productSelect.contains(event.target);
                 
                 if (!isClickInsideAdminPanel && !isClickOnAdminOpenBtn &&
                     !isClickOnGenerateAdminLinkBtn && !isClickOnCopyAdminLinkBtn && 
-                    !isClickOnWhatsappAdminLinkBtn && !isClickOnSavePhotoPricesBtn && !isClickOnSavePricesBtn && !isClickOnProductSelect) { 
+                    !isClickOnWhatsappAdminLinkBtn && !isClickOnSavePhotoPricesBtn && !isClickOnSaveProductPricesBtn && !isClickOnProductSelect) { 
                     console.log("DEBUG: Click outside admin panel, closing.");
                     closeAdminPanel(); 
                 }
