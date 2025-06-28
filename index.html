@@ -396,29 +396,40 @@
         <div class="admin-panel-content">
             <h2>Panel de Administración</h2>
             <p class="subtitle">Gestiona la configuración de la tienda.</p>
-            <div class="form-group">
-                <label for="individual-photo-price">Precio Foto Individual:</label>
-                <input type="number" id="individual-photo-price" min="0" step="100">
-            </div>
-            <div class="form-group">
-                <label for="pack-20-photos-price">Precio Pack 20 Fotos:</label>
-                <input type="number" id="pack-20-photos-price" min="0" step="100">
+
+            <!-- Sección para Precios de Fotos y Videos -->
+            <div class="admin-section">
+                <h3>Precios de Fotos y Videos</h3>
+                <div class="form-group">
+                    <label for="individual-photo-price">Precio Foto Individual:</label>
+                    <input type="number" id="individual-photo-price" min="0" step="100">
+                </div>
+                <div class="form-group">
+                    <label for="pack-20-photos-price">Precio Pack 20 Fotos:</label>
+                    <input type="number" id="pack-20-photos-price" min="0" step="100">
+                </div>
+                <!-- NUEVO BOTÓN PARA GUARDAR PRECIOS DE FOTOS -->
+                <button id="save-photo-prices-btn" class="btn btn-primary admin-btn">Guardar Precios de Fotos</button>
             </div>
 
-            <h3>Precios de Productos Sublimados</h3>
-            <div class="form-group">
-                <label for="product-select">Seleccionar Producto:</label>
-                <select id="product-select" class="filter-select">
-                    <option value="">-- Selecciona un producto --</option>
-                    <!-- Las opciones de productos se cargarán aquí dinámicamente -->
-                </select>
-            </div>
-            <div id="selected-product-price-input-container">
-                <!-- El campo de precio del producto seleccionado se mostrará aquí dinámicamente -->
-                <p class="event-placeholder">Selecciona un producto para modificar su precio.</p>
+            <!-- Sección para Precios de Productos Sublimados -->
+            <div class="admin-section">
+                <h3>Precios de Productos Sublimados</h3>
+                <div class="form-group">
+                    <label for="product-select">Seleccionar Producto:</label>
+                    <select id="product-select" class="filter-select">
+                        <option value="">-- Selecciona un producto --</option>
+                        <!-- Las opciones de productos se cargarán aquí dinámicamente -->
+                    </select>
+                </div>
+                <div id="selected-product-price-input-container">
+                    <!-- El campo de precio del producto seleccionado se mostrará aquí dinámicamente -->
+                    <p class="event-placeholder">Selecciona un producto para modificar su precio.</p>
+                </div>
+                <!-- El botón 'Guardar Precios' original se mantiene por ahora -->
+                <button id="save-prices-btn" class="btn btn-primary">Guardar Precios</button>
             </div>
 
-            <button id="save-prices-btn" class="btn btn-primary">Guardar Precios</button>
             <p id="price-update-message" class="message"></p>
 
             <h3 id="admin-generate-link-header">Generar Enlace de Descarga por IDs</h3>
