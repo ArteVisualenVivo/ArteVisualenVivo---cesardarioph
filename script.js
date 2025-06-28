@@ -1995,6 +1995,21 @@ document.addEventListener('DOMContentLoaded', () => {
         // Cargar selección guardada de localStorage al inicio
         loadSelectionFromLocalStorage();
 
+        // --- NEW: Check for admin parameter in URL query string for the admin button ---
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('admin') && urlParams.get('admin') === 'true') {
+            if (elements.openAdminPanelBtn) {
+                elements.openAdminPanelBtn.style.display = 'block'; // Make the admin button visible
+                console.log("DEBUG: Admin button made visible due to URL parameter.");
+            }
+        } else {
+            if (elements.openAdminPanelBtn) {
+                elements.openAdminPanelBtn.style.display = 'none'; // Ensure it's hidden if parameter is not present or not 'true'
+                console.log("DEBUG: Admin button ensured hidden.");
+            }
+        }
+        // --- END NEW ---
+
         // Load hero background with fallback
         const heroSection = elements.heroSection;
         const initialBgStyle = heroSection ? window.getComputedStyle(heroSection).backgroundImage : 'none';
@@ -2128,8 +2143,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Este botón siempre abre un chat general de WhatsApp, sin importar el carrito.
                 window.open(`https://wa.me/${CONFIG.WHATSAPP_NUMBER}?text=${encodeURIComponent('¡Hola! Tengo una consulta general sobre sus servicios.')}`, '_blank');
             });
-            // Asegurarse de que el botón esté visible al inicio
-            elements.whatsappFloatBtn.style.display = 'flex';
+            // La visibilidad inicial se maneja en la sección NEW al inicio de init().
+            // No es necesario setear el display aquí nuevamente.
         }
 
 
