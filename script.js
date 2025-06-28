@@ -18,11 +18,17 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadPhotoPricesFromLocalStorage() {
         const savedIndividualPrice = localStorage.getItem('individualPhotoPrice');
         const savedPackPrice = localStorage.getItem('pack20PhotosPrice');
-        if (savedIndividualPrice !== null) {
-            CONFIG.PHOTO_PRICE_INDIVIDUAL = parseFloat(savedIndividualPrice);
+        
+        // MODIFICACIÓN: Asegurarse de que los precios siempre sean números válidos.
+        // Si no se encuentran en localStorage o son inválidos, usar los valores por defecto de CONFIG.
+        CONFIG.PHOTO_PRICE_INDIVIDUAL = parseFloat(savedIndividualPrice);
+        if (isNaN(CONFIG.PHOTO_PRICE_INDIVIDUAL) || CONFIG.PHOTO_PRICE_INDIVIDUAL < 0) {
+            CONFIG.PHOTO_PRICE_INDIVIDUAL = 500; // Fallback a valor por defecto
         }
-        if (savedPackPrice !== null) {
-            CONFIG.PHOTO_20_PACK = parseFloat(savedPackPrice);
+
+        CONFIG.PHOTO_20_PACK = parseFloat(savedPackPrice);
+        if (isNaN(CONFIG.PHOTO_20_PACK) || CONFIG.PHOTO_20_PACK < 0) {
+            CONFIG.PHOTO_20_PACK = 8000; // Fallback a valor por defecto
         }
         console.log("DEBUG: Precios cargados del localStorage:", { individual: CONFIG.PHOTO_PRICE_INDIVIDUAL, pack: CONFIG.PHOTO_20_PACK });
     }
@@ -151,8 +157,12 @@ document.addEventListener('DOMContentLoaded', () => {
         closeAdminPanelBtn: document.getElementById('close-admin-panel-btn'),
         individualPhotoPriceInput: document.getElementById('individual-photo-price'),
         pack20PhotosPriceInput: document.getElementById('pack-20-photos-price'),
-        savePricesBtn: document.getElementById('save-prices-btn'),
-        priceUpdateMessage: document.getElementById('price-update-message'),
+        
+        // NEW: Separate save buttons for admin panel
+        savePhotoPricesBtn: document.getElementById('save-photo-prices-btn'), // New ID for photo prices button
+        saveProductPricesBtn: document.getElementById('save-product-prices-btn'), // New ID for product prices button
+
+        priceUpdateMessage: document.getElementById('price-update-message'), // Shared message for price updates
         productSelect: document.getElementById('product-select'),
         selectedProductPriceInputContainer: document.getElementById('selected-product-price-input-container'),
         
@@ -1447,14 +1457,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function savePrices() {
-        // 1. Save photo prices
+    /**
+     * Guarda los precios de las fotos individuales y de paquete.
+     */
+    function savePhotoPrices() {
         const individualPrice = parseFloat(elements.individualPhotoPriceInput ? elements.individualPhotoPriceInput.value : '');
         const packPrice = parseFloat(elements.pack20PhotosPriceInput ? elements.pack20PhotosPriceInput.value : '');
 
         if (isNaN(individualPrice) || individualPrice < 0 || isNaN(packPrice) || packPrice < 0) {
             if (elements.priceUpdateMessage) {
-                elements.priceUpdateMessage.textContent = 'Please enter valid positive numbers for photo prices.';
+                elements.priceUpdateMessage.textContent = 'Por favor, introduce números positivos válidos para los precios de las fotos.';
                 elements.priceUpdateMessage.style.color = 'var(--accent-color)';
             }
             return;
@@ -1466,15 +1478,36 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('individualPhotoPrice', individualPrice);
         localStorage.setItem('pack20PhotosPrice', packPrice);
 
-        // 2. Save product price (only for the currently selected product)
+        if (elements.priceUpdateMessage) {
+            elements.priceUpdateMessage.textContent = 'Precios de fotos guardados correctamente.';
+            elements.priceUpdateMessage.style.color = 'var(--whatsapp-color)';
+            setTimeout(() => {
+                if (elements.priceUpdateMessage) elements.priceUpdateMessage.textContent = '';
+            }, 3000);
+        }
+        updateSelectionUI(); // Recalculate cart total with new prices
+    }
+
+    /**
+     * Guarda el precio del producto seleccionado.
+     */
+    function saveProductPrices() {
         const selectedProductId = elements.productSelect ? elements.productSelect.value : null;
-        if (selectedProductId && elements.selectedProductPriceInputContainer) {
+        if (!selectedProductId) {
+            if (elements.priceUpdateMessage) {
+                elements.priceUpdateMessage.textContent = 'Por favor, selecciona un producto para guardar su precio.';
+                elements.priceUpdateMessage.style.color = 'var(--accent-color)';
+            }
+            return;
+        }
+
+        if (elements.selectedProductPriceInputContainer) {
             const productPriceInput = elements.selectedProductPriceInputContainer.querySelector(`input[data-product-id="${selectedProductId}"]`);
             if (productPriceInput) {
                 const newPrice = parseFloat(productPriceInput.value);
                 if (isNaN(newPrice) || newPrice < 0) {
                     if (elements.priceUpdateMessage) {
-                        elements.priceUpdateMessage.textContent = 'Please enter a valid positive number for the selected product.';
+                        elements.priceUpdateMessage.textContent = 'Por favor, introduce un número positivo válido para el precio del producto seleccionado.';
                         elements.priceUpdateMessage.style.color = 'var(--accent-color)';
                     }
                     productPriceInput.style.borderColor = 'var(--accent-color)'; // Highlight error
@@ -1485,20 +1518,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         productToUpdate.price = newPrice;
                         localStorage.setItem(`productPrice_${selectedProductId}`, newPrice);
                         productPriceInput.style.borderColor = ''; // Clear error highlight
+                        if (elements.priceUpdateMessage) {
+                            elements.priceUpdateMessage.textContent = 'Precio del producto guardado correctamente.';
+                            elements.priceUpdateMessage.style.color = 'var(--whatsapp-color)';
+                            setTimeout(() => {
+                                if (elements.priceUpdateMessage) elements.priceUpdateMessage.textContent = '';
+                            }, 3000);
+                        }
+                        updateSelectionUI(); // Recalculate cart total with new prices
                     }
                 }
             }
         }
-
-        if (elements.priceUpdateMessage) {
-            elements.priceUpdateMessage.textContent = 'Prices saved successfully.';
-            elements.priceUpdateMessage.style.color = 'var(--whatsapp-color)';
-            setTimeout(() => {
-                if (elements.priceUpdateMessage) elements.priceUpdateMessage.textContent = '';
-            }, 3000);
-        }
-
-        updateSelectionUI(); // Recalculate cart total with new prices (both photos and products)
     }
 
     /**
@@ -1995,7 +2026,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Cargar selección guardada de localStorage al inicio
         loadSelectionFromLocalStorage();
 
-        // --- NEW: Check for admin parameter in URL query string for the admin button ---
+        // Check for admin parameter in URL query string for the admin button
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('admin') && urlParams.get('admin') === 'true') {
             if (elements.openAdminPanelBtn) {
@@ -2008,7 +2039,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log("DEBUG: Admin button ensured hidden.");
             }
         }
-        // --- END NEW ---
 
         // Load hero background with fallback
         const heroSection = elements.heroSection;
@@ -2100,29 +2130,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         if (elements.clearSelectionBtn) elements.clearSelectionBtn.addEventListener('click', clearSelection);
 
-        // Generate Download Link Button (Admin, from cart)
-        // Este botón ya no es necesario si el link se genera automáticamente en el mensaje de pago
-        // if (elements.downloadLinkGeneratorBtn) elements.downloadLinkGeneratorBtn.addEventListener('click', generateClientDownloadLink);
-        // WhatsApp Download Link Button (Admin, from cart)
-        // Este botón ya no es necesario si el link se genera automáticamente en el mensaje de pago
-        // if (elements.whatsappDownloadLinkBtn) elements.whatsappDownloadLinkBtn.addEventListener('click', (e) => {
-        //     e.preventDefault();
-        //     const photosInCart = Array.from(selectedItems.values()).filter(item => item.type === 'photo');
-        //     if (photosInCart.length === 0) {
-        //         showToast('No hay fotos seleccionadas para enviar un enlace de descarga.', 'info');
-        //         return;
-        //     }
-        //     const photoIds = photosInCart.map(item => item.originalId).join(',');
-        //     const downloadUrl = generateDownloadUrlFromIds(photoIds, 'download');
-        //     const message = encodeURIComponent(`¡Hola! Aquí tienes el enlace para descargar tus fotos de ArteVisualenVivo: ${downloadUrl}`);
-        //     window.open(`https://wa.me/?text=${message}`, '_blank');
-        //     showToast('Mensaje de WhatsApp con enlace preparado. Selecciona el contacto.', 'info');
-        //     if (elements.selectionPanel) elements.selectionPanel.classList.remove('open');
-        //     elements.selectionPanel.style.display = 'none'; // Explicitly hide
-        //     removeBodyNoScroll();
-        // });
-
-
+        // WhatsApp button inside cart
         if (elements.whatsappBtn) elements.whatsappBtn.addEventListener('click', (e) => {
             e.preventDefault();
             if (selectedItems.size === 0) {
@@ -2136,15 +2144,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (elements.paymentMethodToggle) elements.paymentMethodToggle.checked = false;
         });
 
-        // Floating WhatsApp Button (MODIFICADO)
+        // Floating WhatsApp Button (MODIFICADO para consulta general)
         if (elements.whatsappFloatBtn) {
             elements.whatsappFloatBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 // Este botón siempre abre un chat general de WhatsApp, sin importar el carrito.
                 window.open(`https://wa.me/${CONFIG.WHATSAPP_NUMBER}?text=${encodeURIComponent('¡Hola! Tengo una consulta general sobre sus servicios.')}`, '_blank');
             });
-            // La visibilidad inicial se maneja en la sección NEW al inicio de init().
-            // No es necesario setear el display aquí nuevamente.
+            // Asegurarse de que el botón esté visible al inicio (si no está en modo descarga)
+            // La visibilidad se controla en setMainPageDisplay() y en el bloque de URL params para admin.
         }
 
 
@@ -2167,7 +2175,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Admin Panel
         if (elements.openAdminPanelBtn) elements.openAdminPanelBtn.addEventListener('click', openAdminPanel);
         if (elements.closeAdminPanelBtn) elements.closeAdminPanelBtn.addEventListener('click', closeAdminPanel);
-        if (elements.savePricesBtn) elements.savePricesBtn.addEventListener('click', savePrices);
+        
+        // NEW: Separate save buttons listeners
+        if (elements.savePhotoPricesBtn) elements.savePhotoPricesBtn.addEventListener('click', savePhotoPrices);
+        if (elements.saveProductPricesBtn) elements.saveProductPricesBtn.addEventListener('click', saveProductPrices);
 
         // Listener for product selection dropdown in admin panel
         if (elements.productSelect) {
@@ -2222,7 +2233,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (elements.selectionPanel && elements.selectionPanel.classList.contains('open')) {
                 const isClickInsidePanel = elements.selectionPanel.contains(event.target);
                 const isClickOnSelectionIcon = elements.selectionIcon && elements.selectionIcon.contains(event.target);
-                // No necesitamos verificar los botones de generación de link aquí, ya que el link se genera en el mensaje de pago.
                 
                 if (!isClickInsidePanel && !isClickOnSelectionIcon) {
                     console.log("DEBUG: Click outside selection panel, closing.");
@@ -2237,7 +2247,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Check if the click occurred outside the modal content AND outside the buttons that open it
                 const isClickOutsideContent = !modalContent.contains(event.target);
                 const isClickOnWhatsappBtn = elements.whatsappBtn && elements.whatsappBtn.contains(event.target); // The button from cart that opens this modal
-                // MODIFICACIÓN: Ya no se considera el whatsappFloatBtn aquí para evitar conflictos
                 
                 // If the click is directly on the modal backdrop, or outside both the content AND the button that opens it
                 if (event.target === elements.paymentModal || (isClickOutsideContent && !isClickOnWhatsappBtn)) {
@@ -2257,12 +2266,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isClickOnGenerateAdminLinkBtn = elements.generateAdminDownloadLinkBtn && elements.generateAdminDownloadLinkBtn.contains(event.target);
                 const isClickOnCopyAdminLinkBtn = elements.copyAdminDownloadLinkBtn && elements.copyAdminDownloadLinkBtn.contains(event.target);
                 const isClickOnWhatsappAdminLinkBtn = elements.whatsappAdminDownloadLinkBtn && elements.whatsappAdminDownloadLinkBtn.contains(event.target);
-                const isClickOnSavePricesBtn = elements.savePricesBtn && elements.savePricesBtn.contains(event.target);
+                const isClickOnSavePhotoPricesBtn = elements.savePhotoPricesBtn && elements.savePhotoPricesBtn.contains(event.target); // NEW
+                const isClickOnSaveProductPricesBtn = elements.saveProductPricesBtn && elements.saveProductPricesBtn.contains(event.target); // NEW
                 const isClickOnProductSelect = elements.productSelect && elements.productSelect.contains(event.target);
                 
                 if (!isClickInsideAdminPanel && !isClickOnAdminOpenBtn &&
                     !isClickOnGenerateAdminLinkBtn && !isClickOnCopyAdminLinkBtn && 
-                    !isClickOnWhatsappAdminLinkBtn && !isClickOnSavePricesBtn && !isClickOnProductSelect) { 
+                    !isClickOnWhatsappAdminLinkBtn && !isClickOnSavePhotoPricesBtn && !isClickOnSaveProductPricesBtn && !isClickOnProductSelect) { 
                     console.log("DEBUG: Click outside admin panel, closing.");
                     closeAdminPanel(); 
                 }
