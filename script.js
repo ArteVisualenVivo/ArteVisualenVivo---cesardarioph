@@ -18,11 +18,21 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadPhotoPricesFromLocalStorage() {
         const savedIndividualPrice = localStorage.getItem('individualPhotoPrice');
         const savedPackPrice = localStorage.getItem('pack20PhotosPrice');
-        if (savedIndividualPrice !== null) {
-            CONFIG.PHOTO_PRICE_INDIVIDUAL = parseFloat(savedIndividualPrice);
+        
+        // Asegurarse de que los precios siempre sean números válidos.
+        // Si no se encuentran en localStorage o son inválidos, usar los valores por defecto de CONFIG.
+        const parsedIndividualPrice = parseFloat(savedIndividualPrice);
+        if (!isNaN(parsedIndividualPrice) && parsedIndividualPrice >= 0) {
+            CONFIG.PHOTO_PRICE_INDIVIDUAL = parsedIndividualPrice;
+        } else {
+            CONFIG.PHOTO_PRICE_INDIVIDUAL = 500; // Fallback a valor por defecto
         }
-        if (savedPackPrice !== null) {
-            CONFIG.PHOTO_20_PACK = parseFloat(savedPackPrice);
+
+        const parsedPackPrice = parseFloat(savedPackPrice);
+        if (!isNaN(parsedPackPrice) && parsedPackPrice >= 0) {
+            CONFIG.PHOTO_20_PACK = parsedPackPrice;
+        } else {
+            CONFIG.PHOTO_20_PACK = 8000; // Fallback a valor por defecto
         }
         console.log("DEBUG: Precios cargados del localStorage:", { individual: CONFIG.PHOTO_PRICE_INDIVIDUAL, pack: CONFIG.PHOTO_20_PACK });
     }
@@ -151,8 +161,14 @@ document.addEventListener('DOMContentLoaded', () => {
         closeAdminPanelBtn: document.getElementById('close-admin-panel-btn'),
         individualPhotoPriceInput: document.getElementById('individual-photo-price'),
         pack20PhotosPriceInput: document.getElementById('pack-20-photos-price'),
-        savePricesBtn: document.getElementById('save-prices-btn'),
-        priceUpdateMessage: document.getElementById('price-update-message'),
+        
+        // NEW: Separate save button for photo prices
+        savePhotoPricesBtn: document.getElementById('save-photo-prices-btn'), // New ID for photo prices button
+
+        // Old save prices button (will still handle product prices for now)
+        savePricesBtn: document.getElementById('save-prices-btn'), 
+
+        priceUpdateMessage: document.getElementById('price-update-message'), // Shared message for price updates
         productSelect: document.getElementById('product-select'),
         selectedProductPriceInputContainer: document.getElementById('selected-product-price-input-container'),
         
@@ -1447,8 +1463,42 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    /**
+     * Guarda los precios de las fotos individuales y de paquete.
+     * Esta función es nueva y maneja solo los precios de las fotos.
+     */
+    function savePhotoPrices() {
+        const individualPrice = parseFloat(elements.individualPhotoPriceInput ? elements.individualPhotoPriceInput.value : '');
+        const packPrice = parseFloat(elements.pack20PhotosPriceInput ? elements.pack20PhotosPriceInput.value : '');
+
+        if (isNaN(individualPrice) || individualPrice < 0 || isNaN(packPrice) || packPrice < 0) {
+            if (elements.priceUpdateMessage) {
+                elements.priceUpdateMessage.textContent = 'Por favor, introduce números positivos válidos para los precios de las fotos.';
+                elements.priceUpdateMessage.style.color = 'var(--accent-color)';
+            }
+            return;
+        }
+
+        CONFIG.PHOTO_PRICE_INDIVIDUAL = individualPrice;
+        CONFIG.PHOTO_20_PACK = packPrice;
+
+        localStorage.setItem('individualPhotoPrice', individualPrice);
+        localStorage.setItem('pack20PhotosPrice', packPrice);
+
+        if (elements.priceUpdateMessage) {
+            elements.priceUpdateMessage.textContent = 'Precios de fotos guardados correctamente.';
+            elements.priceUpdateMessage.style.color = 'var(--whatsapp-color)';
+            setTimeout(() => {
+                if (elements.priceUpdateMessage) elements.priceUpdateMessage.textContent = '';
+            }, 3000);
+        }
+        updateSelectionUI(); // Recalculate cart total with new photo prices
+    }
+
+    // La función 'savePrices' original (que guarda ambos) se mantiene por ahora.
+    // En un paso posterior, la modificaremos para que solo guarde los precios de productos.
     function savePrices() {
-        // 1. Save photo prices
+        // 1. Save photo prices (this logic will be moved to savePhotoPrices() later)
         const individualPrice = parseFloat(elements.individualPhotoPriceInput ? elements.individualPhotoPriceInput.value : '');
         const packPrice = parseFloat(elements.pack20PhotosPriceInput ? elements.pack20PhotosPriceInput.value : '');
 
@@ -2100,29 +2150,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         if (elements.clearSelectionBtn) elements.clearSelectionBtn.addEventListener('click', clearSelection);
 
-        // Generate Download Link Button (Admin, from cart)
-        // Este botón ya no es necesario si el link se genera automáticamente en el mensaje de pago
-        // if (elements.downloadLinkGeneratorBtn) elements.downloadLinkGeneratorBtn.addEventListener('click', generateClientDownloadLink);
-        // WhatsApp Download Link Button (Admin, from cart)
-        // Este botón ya no es necesario si el link se genera automáticamente en el mensaje de pago
-        // if (elements.whatsappDownloadLinkBtn) elements.whatsappDownloadLinkBtn.addEventListener('click', (e) => {
-        //     e.preventDefault();
-        //     const photosInCart = Array.from(selectedItems.values()).filter(item => item.type === 'photo');
-        //     if (photosInCart.length === 0) {
-        //         showToast('No hay fotos seleccionadas para enviar un enlace de descarga.', 'info');
-        //         return;
-        //     }
-        //     const photoIds = photosInCart.map(item => item.originalId).join(',');
-        //     const downloadUrl = generateDownloadUrlFromIds(photoIds, 'download');
-        //     const message = encodeURIComponent(`¡Hola! Aquí tienes el enlace para descargar tus fotos de ArteVisualenVivo: ${downloadUrl}`);
-        //     window.open(`https://wa.me/?text=${message}`, '_blank');
-        //     showToast('Mensaje de WhatsApp con enlace preparado. Selecciona el contacto.', 'info');
-        //     if (elements.selectionPanel) elements.selectionPanel.classList.remove('open');
-        //     elements.selectionPanel.style.display = 'none'; // Explicitly hide
-        //     removeBodyNoScroll();
-        // });
-
-
+        // WhatsApp button inside cart
         if (elements.whatsappBtn) elements.whatsappBtn.addEventListener('click', (e) => {
             e.preventDefault();
             if (selectedItems.size === 0) {
@@ -2136,7 +2164,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (elements.paymentMethodToggle) elements.paymentMethodToggle.checked = false;
         });
 
-        // Floating WhatsApp Button (MODIFICADO)
+        // Floating WhatsApp Button (MODIFICADO para consulta general)
         if (elements.whatsappFloatBtn) {
             elements.whatsappFloatBtn.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -2167,7 +2195,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Admin Panel
         if (elements.openAdminPanelBtn) elements.openAdminPanelBtn.addEventListener('click', openAdminPanel);
         if (elements.closeAdminPanelBtn) elements.closeAdminPanelBtn.addEventListener('click', closeAdminPanel);
+        
+        // NEW: Listener for the new "Guardar Precios de Fotos" button
+        if (elements.savePhotoPricesBtn) elements.savePhotoPricesBtn.addEventListener('click', savePhotoPrices);
+
+        // Listener for the old "Guardar Precios" button (still handles products and photos for now)
         if (elements.savePricesBtn) elements.savePricesBtn.addEventListener('click', savePrices);
+
 
         // Listener for product selection dropdown in admin panel
         if (elements.productSelect) {
@@ -2222,7 +2256,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (elements.selectionPanel && elements.selectionPanel.classList.contains('open')) {
                 const isClickInsidePanel = elements.selectionPanel.contains(event.target);
                 const isClickOnSelectionIcon = elements.selectionIcon && elements.selectionIcon.contains(event.target);
-                // No necesitamos verificar los botones de generación de link aquí, ya que el link se genera en el mensaje de pago.
                 
                 if (!isClickInsidePanel && !isClickOnSelectionIcon) {
                     console.log("DEBUG: Click outside selection panel, closing.");
@@ -2234,12 +2267,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Close Payment Modal
             if (elements.paymentModal && elements.paymentModal.classList.contains('open')) {
                 const modalContent = elements.paymentModal.querySelector('.payment-modal-content');
-                // Check if the click occurred outside the modal content AND outside the buttons that open it
                 const isClickOutsideContent = !modalContent.contains(event.target);
-                const isClickOnWhatsappBtn = elements.whatsappBtn && elements.whatsappBtn.contains(event.target); // The button from cart that opens this modal
-                // MODIFICACIÓN: Ya no se considera el whatsappFloatBtn aquí para evitar conflictos
+                const isClickOnWhatsappBtn = elements.whatsappBtn && elements.whatsappBtn.contains(event.target);
                 
-                // If the click is directly on the modal backdrop, or outside both the content AND the button that opens it
                 if (event.target === elements.paymentModal || (isClickOutsideContent && !isClickOnWhatsappBtn)) {
                     console.log("DEBUG: Click outside payment modal, closing.");
                     if (elements.paymentModal) elements.paymentModal.classList.remove('open');
@@ -2257,12 +2287,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isClickOnGenerateAdminLinkBtn = elements.generateAdminDownloadLinkBtn && elements.generateAdminDownloadLinkBtn.contains(event.target);
                 const isClickOnCopyAdminLinkBtn = elements.copyAdminDownloadLinkBtn && elements.copyAdminDownloadLinkBtn.contains(event.target);
                 const isClickOnWhatsappAdminLinkBtn = elements.whatsappAdminDownloadLinkBtn && elements.whatsappAdminDownloadLinkBtn.contains(event.target);
-                const isClickOnSavePricesBtn = elements.savePricesBtn && elements.savePricesBtn.contains(event.target);
+                const isClickOnSavePhotoPricesBtn = elements.savePhotoPricesBtn && elements.savePhotoPricesBtn.contains(event.target); // NEW
+                const isClickOnSavePricesBtn = elements.savePricesBtn && elements.savePricesBtn.contains(event.target); // Old button
                 const isClickOnProductSelect = elements.productSelect && elements.productSelect.contains(event.target);
                 
                 if (!isClickInsideAdminPanel && !isClickOnAdminOpenBtn &&
                     !isClickOnGenerateAdminLinkBtn && !isClickOnCopyAdminLinkBtn && 
-                    !isClickOnWhatsappAdminLinkBtn && !isClickOnSavePricesBtn && !isClickOnProductSelect) { 
+                    !isClickOnWhatsappAdminLinkBtn && !isClickOnSavePhotoPricesBtn && !isClickOnSavePricesBtn && !isClickOnProductSelect) { 
                     console.log("DEBUG: Click outside admin panel, closing.");
                     closeAdminPanel(); 
                 }
