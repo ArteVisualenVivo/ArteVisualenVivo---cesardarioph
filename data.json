@@ -31,6 +31,43 @@
     ]
   },
   {
+    "name": "boliches",
+    "path": "boliches",
+    "isProductCategory": false,
+    "content": [
+      {
+        "id": "8iq4c8",
+        "type": "image",
+        "src": "boliches/Zen/zen (1).jpg",
+        "name": "zen (1)"
+      },
+      {
+        "id": "8zrqqf",
+        "type": "image",
+        "src": "boliches/Zen/zen (2).jpg",
+        "name": "zen (2)"
+      },
+      {
+        "id": "9gtd4m",
+        "type": "image",
+        "src": "boliches/Zen/zen (3).jpg",
+        "name": "zen (3)"
+      },
+      {
+        "id": "9xuzit",
+        "type": "image",
+        "src": "boliches/Zen/zen (4).jpg",
+        "name": "zen (4)"
+      },
+      {
+        "id": "aewlx0",
+        "type": "image",
+        "src": "boliches/Zen/zen (5).jpg",
+        "name": "zen (5)"
+      }
+    ]
+  },
+  {
     "name": "casamiento",
     "path": "casamiento",
     "isProductCategory": false,
@@ -310,43 +347,6 @@
             "name": "1"
           }
         ]
-      }
-    ]
-  },
-  {
-    "name": "Zen",
-    "path": "Zen",
-    "isProductCategory": false,
-    "content": [
-      {
-        "id": "gddpgq",
-        "type": "image",
-        "src": "Zen/zen (1).jpg",
-        "name": "zen (1)"
-      },
-      {
-        "id": "gufbux",
-        "type": "image",
-        "src": "Zen/zen (2).jpg",
-        "name": "zen (2)"
-      },
-      {
-        "id": "hbgy94",
-        "type": "image",
-        "src": "Zen/zen (3).jpg",
-        "name": "zen (3)"
-      },
-      {
-        "id": "hsiknb",
-        "type": "image",
-        "src": "Zen/zen (4).jpg",
-        "name": "zen (4)"
-      },
-      {
-        "id": "i9k71i",
-        "type": "image",
-        "src": "Zen/zen (5).jpg",
-        "name": "zen (5)"
       }
     ]
   }
