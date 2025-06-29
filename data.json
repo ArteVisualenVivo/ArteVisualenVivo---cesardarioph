@@ -3,37 +3,30 @@
     "name": "15años",
     "path": "15años",
     "isProductCategory": false,
-    "albums": [
+    "content": [
       {
-        "id": "ul7ujp",
-        "name": "magdalena",
-        "path": "15años/magdalena",
-        "content": [
-          {
-            "id": "1n95w9p",
-            "type": "image",
-            "src": "15años/magdalena/Generación X-000.jpg",
-            "name": "Generación X-000"
-          },
-          {
-            "id": "1n9pov2",
-            "type": "image",
-            "src": "15años/magdalena/Generación X-001.jpg",
-            "name": "Generación X-001"
-          },
-          {
-            "id": "1na9hgf",
-            "type": "image",
-            "src": "15años/magdalena/Generación X-002.jpg",
-            "name": "Generación X-002"
-          },
-          {
-            "id": "1ytcog5",
-            "type": "image",
-            "src": "15años/magdalena/magdalena.jpg",
-            "name": "magdalena"
-          }
-        ]
+        "id": "1n95w9p",
+        "type": "image",
+        "src": "15años/magdalena/Generación X-000.jpg",
+        "name": "Generación X-000"
+      },
+      {
+        "id": "1n9pov2",
+        "type": "image",
+        "src": "15años/magdalena/Generación X-001.jpg",
+        "name": "Generación X-001"
+      },
+      {
+        "id": "1na9hgf",
+        "type": "image",
+        "src": "15años/magdalena/Generación X-002.jpg",
+        "name": "Generación X-002"
+      },
+      {
+        "id": "1ytcog5",
+        "type": "image",
+        "src": "15años/magdalena/magdalena.jpg",
+        "name": "magdalena"
       }
     ]
   },
@@ -41,43 +34,36 @@
     "name": "boliches",
     "path": "boliches",
     "isProductCategory": false,
-    "albums": [
+    "content": [
       {
-        "id": "1gbux8x",
-        "name": "Zen",
-        "path": "boliches/Zen",
-        "content": [
-          {
-            "id": "8iq4c8",
-            "type": "image",
-            "src": "boliches/Zen/zen (1).jpg",
-            "name": "zen (1)"
-          },
-          {
-            "id": "8zrqqf",
-            "type": "image",
-            "src": "boliches/Zen/zen (2).jpg",
-            "name": "zen (2)"
-          },
-          {
-            "id": "9gtd4m",
-            "type": "image",
-            "src": "boliches/Zen/zen (3).jpg",
-            "name": "zen (3)"
-          },
-          {
-            "id": "9xuzit",
-            "type": "image",
-            "src": "boliches/Zen/zen (4).jpg",
-            "name": "zen (4)"
-          },
-          {
-            "id": "aewlx0",
-            "type": "image",
-            "src": "boliches/Zen/zen (5).jpg",
-            "name": "zen (5)"
-          }
-        ]
+        "id": "8iq4c8",
+        "type": "image",
+        "src": "boliches/Zen/zen (1).jpg",
+        "name": "zen (1)"
+      },
+      {
+        "id": "8zrqqf",
+        "type": "image",
+        "src": "boliches/Zen/zen (2).jpg",
+        "name": "zen (2)"
+      },
+      {
+        "id": "9gtd4m",
+        "type": "image",
+        "src": "boliches/Zen/zen (3).jpg",
+        "name": "zen (3)"
+      },
+      {
+        "id": "9xuzit",
+        "type": "image",
+        "src": "boliches/Zen/zen (4).jpg",
+        "name": "zen (4)"
+      },
+      {
+        "id": "aewlx0",
+        "type": "image",
+        "src": "boliches/Zen/zen (5).jpg",
+        "name": "zen (5)"
       }
     ]
   },
@@ -103,21 +89,12 @@
         "type": "image",
         "src": "casamiento/Generación X-005.jpg",
         "name": "Generación X-005"
-      }
-    ],
-    "albums": [
+      },
       {
-        "id": "1hzdi93",
-        "name": "marta-pedro",
-        "path": "casamiento/marta-pedro",
-        "content": [
-          {
-            "id": "nt2knp",
-            "type": "image",
-            "src": "casamiento/marta-pedro/marta-pedro.jpg",
-            "name": "marta-pedro"
-          }
-        ]
+        "id": "nt2knp",
+        "type": "image",
+        "src": "casamiento/marta-pedro/marta-pedro.jpg",
+        "name": "marta-pedro"
       }
     ]
   },
@@ -127,10 +104,9 @@
     "isProductCategory": true,
     "products": [
       {
-        "id": "vkkxho",
+        "id": "bfvnsv",
         "name": "bolsas-de-friselina",
         "path": "tienda-productos/bolsas-de-friselina",
-        "price": 1500,
         "images": [
           {
             "id": "151pjpv",
@@ -141,10 +117,9 @@
         ]
       },
       {
-        "id": "ec8u6f",
+        "id": "92rzp0",
         "name": "cantimploras",
         "path": "tienda-productos/cantimploras",
-        "price": 1500,
         "images": [
           {
             "id": "1tam1j2",
@@ -161,10 +136,9 @@
         ]
       },
       {
-        "id": "16qcqer",
+        "id": "11gvvxc",
         "name": "destapadores",
         "path": "tienda-productos/destapadores",
-        "price": 1500,
         "images": [
           {
             "id": "lytvbm",
@@ -175,10 +149,9 @@
         ]
       },
       {
-        "id": "1e5vawo",
+        "id": "t2l5uz",
         "name": "juego-de-mate",
         "path": "tienda-productos/juego-de-mate",
-        "price": 1500,
         "images": [
           {
             "id": "1knvdv1",
@@ -189,10 +162,9 @@
         ]
       },
       {
-        "id": "k4y9tg",
+        "id": "ol2btt",
         "name": "llaveros",
         "path": "tienda-productos/llaveros",
-        "price": 1500,
         "images": [
           {
             "id": "gxbub5",
@@ -203,10 +175,9 @@
         ]
       },
       {
-        "id": "2z2z34",
+        "id": "oa3ytv",
         "name": "mates",
         "path": "tienda-productos/mates",
-        "price": 1500,
         "images": [
           {
             "id": "1e0c2ak",
@@ -223,10 +194,9 @@
         ]
       },
       {
-        "id": "mp437u",
+        "id": "r58587",
         "name": "mochilas",
         "path": "tienda-productos/mochilas",
-        "price": 1500,
         "images": [
           {
             "id": "c69lcr",
@@ -237,10 +207,9 @@
         ]
       },
       {
-        "id": "1eie1m4",
+        "id": "udorxb",
         "name": "Mouse-Pad-Sublimado",
         "path": "tienda-productos/Mouse-Pad-Sublimado",
-        "price": 1500,
         "images": [
           {
             "id": "1vm4amv",
@@ -263,10 +232,9 @@
         ]
       },
       {
-        "id": "30vcb9",
+        "id": "obwc20",
         "name": "pines",
         "path": "tienda-productos/pines",
-        "price": 1500,
         "images": [
           {
             "id": "qcfi9c",
@@ -277,10 +245,9 @@
         ]
       },
       {
-        "id": "17075ba",
+        "id": "1jq9xoz",
         "name": "platos-cubiertos",
         "path": "tienda-productos/platos-cubiertos",
-        "price": 1500,
         "images": [
           {
             "id": "14l3ren",
@@ -291,10 +258,9 @@
         ]
       },
       {
-        "id": "16757ui",
+        "id": "1ignkyv",
         "name": "posa-vasos",
         "path": "tienda-productos/posa-vasos",
-        "price": 1500,
         "images": [
           {
             "id": "az1h9n",
@@ -305,10 +271,9 @@
         ]
       },
       {
-        "id": "rld9r9",
+        "id": "sa40gi",
         "name": "puas",
         "path": "tienda-productos/puas",
-        "price": 1500,
         "images": [
           {
             "id": "1wfmbvk",
@@ -319,10 +284,9 @@
         ]
       },
       {
-        "id": "283p8c",
+        "id": "1cgmnxr",
         "name": "remeras-blancas",
         "path": "tienda-productos/remeras-blancas",
-        "price": 1500,
         "images": [
           {
             "id": "1rp82y1",
@@ -333,10 +297,9 @@
         ]
       },
       {
-        "id": "e1kdwq",
+        "id": "114n6jh",
         "name": "remeras-negras-estampadas",
         "path": "tienda-productos/remeras-negras-estampadas",
-        "price": 1500,
         "images": [
           {
             "id": "1i8ym2j",
@@ -347,10 +310,9 @@
         ]
       },
       {
-        "id": "1rhh0u3",
+        "id": "b21g6g",
         "name": "stickers-sublimables-comunes",
         "path": "tienda-productos/stickers-sublimables-comunes",
-        "price": 1500,
         "images": [
           {
             "id": "zgdszu",
@@ -361,10 +323,9 @@
         ]
       },
       {
-        "id": "32xnld",
+        "id": "odync4",
         "name": "tazas",
         "path": "tienda-productos/tazas",
-        "price": 1500,
         "images": [
           {
             "id": "1x2prtg",
@@ -375,10 +336,9 @@
         ]
       },
       {
-        "id": "1cz68xl",
+        "id": "yfge92",
         "name": "vasos-termicos",
         "path": "tienda-productos/vasos-termicos",
-        "price": 1500,
         "images": [
           {
             "id": "d7jw24",
