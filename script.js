@@ -7,11 +7,11 @@ document.addEventListener('DOMContentLoaded', () => {
         ITEMS_PER_PAGE: 72,
 
         // Valores por defecto para los precios de fotos (serán sobrescritos por localStorage)
-        // AHORA SON PRECIOS POR TRAMOS
-        PHOTO_PRICE_TIER_1: 1000, // 1 unidad
-        PHOTO_PRICE_TIER_2: 900,  // 2 a 10 unidades
-        PHOTO_PRICE_TIER_3: 800,  // 11 a 20 unidades
-        PHOTO_PRICE_TIER_4: 700,  // 21 o más unidades
+        // AHORA SON PRECIOS POR TRAMOS (ACTUALIZADOS SEGÚN TU INDICACIÓN)
+        PHOTO_PRICE_TIER_1: 2500, // 1 unidad
+        PHOTO_PRICE_TIER_2: 2000,  // 2 a 10 unidades
+        PHOTO_PRICE_TIER_3: 1750,  // 11 a 20 unidades
+        PHOTO_PRICE_TIER_4: 1500,  // 21 o más unidades
 
         // Alias de Mercado Pago (lo usaremos también para la transferencia bancaria)
         MERCADO_PAGO_ALIAS: 'cesar.dario.ph'
@@ -31,10 +31,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return (!isNaN(parsedPrice) && parsedPrice >= 0) ? parsedPrice : defaultValue;
         };
 
-        CONFIG.PHOTO_PRICE_TIER_1 = parseAndValidatePrice(savedTier1Price, 1000);
-        CONFIG.PHOTO_PRICE_TIER_2 = parseAndValidatePrice(savedTier2Price, 900);
-        CONFIG.PHOTO_PRICE_TIER_3 = parseAndValidatePrice(savedTier3Price, 800);
-        CONFIG.PHOTO_PRICE_TIER_4 = parseAndValidatePrice(savedTier4Price, 700);
+        CONFIG.PHOTO_PRICE_TIER_1 = parseAndValidatePrice(savedTier1Price, 2500);
+        CONFIG.PHOTO_PRICE_TIER_2 = parseAndValidatePrice(savedTier2Price, 2000);
+        CONFIG.PHOTO_PRICE_TIER_3 = parseAndValidatePrice(savedTier3Price, 1750);
+        CONFIG.PHOTO_PRICE_TIER_4 = parseAndValidatePrice(savedTier4Price, 1500);
 
         console.log("DEBUG: Precios de fotos por tramos cargados del localStorage:", { 
             tier1: CONFIG.PHOTO_PRICE_TIER_1, 
@@ -488,7 +488,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     updateItemQuantity(item.id, null, 1, 'photo');
                 });
 
-                const removeButton = document.createElement('button');
+                const removeButton = document.createElement('button'); // Declarar removeButton aquí
                 removeButton.className = 'remove-item-btn';
                 removeButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
                 removeButton.addEventListener('click', (e) => {
@@ -549,6 +549,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     updateItemQuantity(product.id, selectedImage.id, 1, 'product');
                 });
 
+                const removeButton = document.createElement('button'); // Declarar removeButton aquí también
+                removeButton.className = 'remove-item-btn';
+                removeButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
+                removeButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    removeItemFromCart(product.id, 'product', selectedImage.id); // Pasar ID de producto padre e ID de imagen
+                    showToast(`"${product.name} (${selectedImage.name || `Modelo ${selectedImage.id}`})" eliminado.`, 'info');
+                });
 
                 listItem.appendChild(itemImage);
                 listItem.appendChild(itemInfo);
@@ -1885,6 +1893,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function generateClientDownloadLink() {
         const photosInCart = Array.from(selectedItems.values()).filter(item => item.type === 'photo' && item.quantity > 0); // Solo fotos con cantidad > 0
 
+        console.log("DEBUG: generateClientDownloadLink: photosInCart array:", photosInCart); // NUEVO DEBUG
         if (photosInCart.length === 0) {
             showToast('No hay fotos seleccionadas para generar un enlace de descarga.', 'info');
             return;
@@ -1897,6 +1906,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 photoIds.push(item.originalId);
             }
         });
+        console.log("DEBUG: generateClientDownloadLink: photoIds array before join:", photoIds); // NUEVO DEBUG
 
         const downloadUrl = generateDownloadUrlFromIds(photoIds.join(','), 'download'); // Use 'download' for client link
 
