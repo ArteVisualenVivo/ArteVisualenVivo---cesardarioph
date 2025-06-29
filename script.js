@@ -7,11 +7,11 @@ document.addEventListener('DOMContentLoaded', () => {
         ITEMS_PER_PAGE: 72,
 
         // Valores por defecto para los precios de fotos (serán sobrescritos por localStorage)
-        // AHORA SON PRECIOS POR TRAMOS (ACTUALIZADOS SEGÚN TU INDICACIÓN)
-        PHOTO_PRICE_TIER_1: 3000, // 1 unidad
-        PHOTO_PRICE_TIER_2: 2500,  // 2 a 10 unidades
-        PHOTO_PRICE_TIER_3: 2225,  // 11 a 20 unidades
-        PHOTO_PRICE_TIER_4: 2000,  // 21 o más unidades
+        // AHORA SON PRECIOS POR TRAMOS
+        PHOTO_PRICE_TIER_1: 1000, // 1 unidad
+        PHOTO_PRICE_TIER_2: 900,  // 2 a 10 unidades
+        PHOTO_PRICE_TIER_3: 800,  // 11 a 20 unidades
+        PHOTO_PRICE_TIER_4: 700,  // 21 o más unidades
 
         // Alias de Mercado Pago (lo usaremos también para la transferencia bancaria)
         MERCADO_PAGO_ALIAS: 'cesar.dario.ph'
@@ -31,10 +31,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return (!isNaN(parsedPrice) && parsedPrice >= 0) ? parsedPrice : defaultValue;
         };
 
-        CONFIG.PHOTO_PRICE_TIER_1 = parseAndValidatePrice(savedTier1Price, 3000);
-        CONFIG.PHOTO_PRICE_TIER_2 = parseAndValidatePrice(savedTier2Price, 2500);
-        CONFIG.PHOTO_PRICE_TIER_3 = parseAndValidatePrice(savedTier3Price, 2225);
-        CONFIG.PHOTO_PRICE_TIER_4 = parseAndValidatePrice(savedTier4Price, 2000);
+        CONFIG.PHOTO_PRICE_TIER_1 = parseAndValidatePrice(savedTier1Price, 1000);
+        CONFIG.PHOTO_PRICE_TIER_2 = parseAndValidatePrice(savedTier2Price, 900);
+        CONFIG.PHOTO_PRICE_TIER_3 = parseAndValidatePrice(savedTier3Price, 800);
+        CONFIG.PHOTO_PRICE_TIER_4 = parseAndValidatePrice(savedTier4Price, 700);
 
         console.log("DEBUG: Precios de fotos por tramos cargados del localStorage:", { 
             tier1: CONFIG.PHOTO_PRICE_TIER_1, 
@@ -488,7 +488,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     updateItemQuantity(item.id, null, 1, 'photo');
                 });
 
-                const removeButton = document.createElement('button'); // Declarar removeButton aquí
+                const removeButton = document.createElement('button');
                 removeButton.className = 'remove-item-btn';
                 removeButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
                 removeButton.addEventListener('click', (e) => {
@@ -549,14 +549,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     updateItemQuantity(product.id, selectedImage.id, 1, 'product');
                 });
 
-                const removeButton = document.createElement('button'); // Declarar removeButton aquí también
-                removeButton.className = 'remove-item-btn';
-                removeButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
-                removeButton.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    removeItemFromCart(product.id, 'product', selectedImage.id); // Pasar ID de producto padre e ID de imagen
-                    showToast(`"${product.name} (${selectedImage.name || `Modelo ${selectedImage.id}`})" eliminado.`, 'info');
-                });
 
                 listItem.appendChild(itemImage);
                 listItem.appendChild(itemInfo);
@@ -639,7 +631,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     selectedImage: targetImage // Almacena la referencia a la imagen de variante específica
                 };
                 selectedItems.set(mapKey, itemToStore);
-                showToast(`"${itemData.name} (${targetImage.name || `Modelo ${targetData.id}`})" añadido al carrito.`, 'success');
+                showToast(`"${itemData.name} (${targetImage.name || `Modelo ${targetImage.id}`})" añadido al carrito.`, 'success');
             }
         } else {
             console.error("Tipo de ítem desconocido:", type);
@@ -790,7 +782,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Botón de selección para productos: añadir la VARIANTE ESPECÍFICA que se está viendo
             elements.addToSelectionBtn.style.display = 'inline-block';
             const currentProductImageVariant = currentLightboxItems[currentPhotoIndex];
-            const mapKey = `product_${item.id}_${currentProductImageVariant.id}`;
+            const mapKey = `product_${item.id}_${currentProductImageVariant.id}`; // Clave para la variante específica
             
             if (selectedItems.has(mapKey)) {
                 elements.addToSelectionBtn.textContent = 'Añadido al Carrito (Cant: ' + selectedItems.get(mapKey).quantity + ')';
@@ -1239,7 +1231,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 viewEventBtn.addEventListener('click', () => {
                     console.log(`DEBUG: Clic en botón "Ver Galería" para el evento: ${event.name}`);
                     filterGalleryByCategory(event.name);
-                    if (elements.gallerySection) elements.gallerySection.style.display = 'block'; // Hacer visible la galería
+                    if (elements.gallerySection) elements.gallerySection.style.display = 'block';
                     if (elements.categoryFilter) elements.categoryFilter.value = event.name;
                     if (elements.gallerySection) elements.gallerySection.scrollIntoView({ behavior: 'smooth' });
                 });
@@ -1274,12 +1266,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function filterGalleryByCategory(categoryName) {
         console.log(`DEBUG: filterGalleryByCategory llamado con categoría: ${categoryName}`);
         if (!elements.photoGrid || !elements.currentEventGalleryTitle) return;
-        
-        // Asegurarse de que la sección de la galería esté visible cuando se filtra
-        if (elements.gallerySection) {
-            elements.gallerySection.style.display = 'block';
-        }
-
         if (categoryName === 'all') {
             currentFilteredPhotos = [...allPhotos]; // Mostrar todas las fotos
             elements.currentEventGalleryTitle.textContent = 'Todas las Fotos de Eventos';
@@ -1379,8 +1365,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Initial rendering of main page content
             renderEventPreviews(eventPreviews); 
             populateCategoryFilter();
-            // REMOVED: elements.gallerySection.style.display = 'block'; // Gallery starts hidden
-            // REMOVED: filterGalleryByCategory('all'); // Gallery starts hidden, no initial filter
+            if (elements.gallerySection) elements.gallerySection.style.display = 'block';
+            filterGalleryByCategory('all'); // Show all photos by default at startup
             renderGridForProducts(elements.featuredProductsGrid, allProducts);
             updateSelectionUI(); // Ensure cart updates and buttons reflect status
 
@@ -1671,8 +1657,7 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.servicesSection,
             elements.productsSection,
             elements.contactSection,
-            elements.footer,
-            document.getElementById('about') // Added about section
+            elements.footer
         ];
         const panelsAndModals = [
             elements.mobileMenu,
@@ -1900,7 +1885,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function generateClientDownloadLink() {
         const photosInCart = Array.from(selectedItems.values()).filter(item => item.type === 'photo' && item.quantity > 0); // Solo fotos con cantidad > 0
 
-        console.log("DEBUG: generateClientDownloadLink: photosInCart array:", photosInCart); // NUEVO DEBUG
         if (photosInCart.length === 0) {
             showToast('No hay fotos seleccionadas para generar un enlace de descarga.', 'info');
             return;
@@ -1913,7 +1897,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 photoIds.push(item.originalId);
             }
         });
-        console.log("DEBUG: generateClientDownloadLink: photoIds array before join:", photoIds); // NUEVO DEBUG
 
         const downloadUrl = generateDownloadUrlFromIds(photoIds.join(','), 'download'); // Use 'download' for client link
 
