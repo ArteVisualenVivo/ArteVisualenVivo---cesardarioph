@@ -468,26 +468,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 itemInfo.innerHTML = `
                     <h5>${item.name || `Foto ${item.id}`}</h5>
                     <p class="item-price">${formatCurrency(displayPricePerPhoto)} c/u</p>
+                    <p class="quantity-value">Cantidad: ${itemInCart.quantity}</p> <!-- Mostrar solo la cantidad -->
                 `;
 
-                // Controles de cantidad para fotos
-                const quantityControl = document.createElement('div');
-                quantityControl.className = 'quantity-control';
-                quantityControl.innerHTML = `
-                    <button class="quantity-minus-btn" data-id="${item.id}" data-type="photo">-</button>
-                    <span class="quantity-value">${itemInCart.quantity}</span>
-                    <button class="quantity-plus-btn" data-id="${item.id}" data-type="photo">+</button>
-                `;
+                // NO SE RENDERIZAN LOS BOTONES DE CANTIDAD PARA FOTOS
+                // const quantityControl = document.createElement('div');
+                // quantityControl.className = 'quantity-control';
+                // quantityControl.innerHTML = `
+                //     <button class="quantity-minus-btn" data-id="${item.id}" data-type="photo">-</button>
+                //     <span class="quantity-value">${itemInCart.quantity}</span>
+                //     <button class="quantity-plus-btn" data-id="${item.id}" data-type="photo">+</button>
+                // `;
 
-                // Añadir listeners a los botones de cantidad
-                quantityControl.querySelector('.quantity-minus-btn').addEventListener('click', (e) => {
-                    e.stopPropagation(); 
-                    updateItemQuantity(item.id, null, -1, 'photo');
-                });
-                quantityControl.querySelector('.quantity-plus-btn').addEventListener('click', (e) => {
-                    e.stopPropagation(); 
-                    updateItemQuantity(item.id, null, 1, 'photo');
-                });
+                // // Añadir listeners a los botones de cantidad
+                // quantityControl.querySelector('.quantity-minus-btn').addEventListener('click', (e) => {
+                //     e.stopPropagation(); 
+                //     updateItemQuantity(item.id, null, -1, 'photo');
+                // });
+                // quantityControl.querySelector('.quantity-plus-btn').addEventListener('click', (e) => {
+                //     e.stopPropagation(); 
+                //     updateItemQuantity(item.id, null, 1, 'photo');
+                // });
 
                 const removeButton = document.createElement('button'); // Declarar removeButton aquí
                 removeButton.className = 'remove-item-btn';
@@ -500,7 +501,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 listItem.appendChild(itemImage);
                 listItem.appendChild(itemInfo);
-                listItem.appendChild(quantityControl); 
+                // listItem.appendChild(quantityControl); // NO SE AÑADE EL CONTROL DE CANTIDAD PARA FOTOS
                 listItem.appendChild(removeButton);
                 elements.selectedItemsList.appendChild(listItem);
             });
@@ -532,7 +533,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p class="item-price">${formatCurrency(product.price * itemInCart.quantity)}</p>
                 `;
 
-                // Controles de cantidad para productos
+                // Controles de cantidad para productos (ESTOS SE MANTIENEN)
                 const quantityControl = document.createElement('div');
                 quantityControl.className = 'quantity-control';
                 quantityControl.innerHTML = `
@@ -602,7 +603,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (selectedItems.has(mapKey)) {
                 // Si ya existe, incrementar la cantidad
                 const existingItem = selectedItems.get(mapKey);
-                existingItem.quantity += 1;
+                existingItem.quantity += 1; // Solo se incrementa la cantidad, no se añade un nuevo item
                 selectedItems.set(mapKey, existingItem);
                 showToast('Cantidad de foto actualizada.', 'success');
             } else {
@@ -662,7 +663,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateItemQuantity(id, imageId, change, itemType) {
         let mapKey;
         if (itemType === 'photo') {
-            mapKey = 'photo_' + id;
+            // Para fotos, solo permitimos añadir o eliminar completamente, no cambiar la cantidad aquí.
+            // Si se llama con change, significa que se está intentando modificar la cantidad de una foto,
+            // lo cual ya no es el comportamiento deseado.
+            console.warn("WARN: Intento de modificar la cantidad de una foto digital. Esto ya no es compatible a través de los botones +/-.");
+            return; // Salir de la función para fotos
         } else if (itemType === 'product') {
             mapKey = `product_${id}_${imageId}`;
         } else {
@@ -2299,7 +2304,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log("DEBUG: Clic fuera del panel de selección, cerrando.");
                     if (elements.selectionPanel) elements.selectionPanel.classList.remove('open');
                     elements.selectionPanel.style.display = 'none'; // Ocultar explícitamente
-                    removeBodyNoScroll(); 
+                    removeBodyNoScroll();
                 }
             }
             // Cerrar Modal de Pago
