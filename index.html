@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arte & Estampa | Fotografía y Productos Personalizados</title>
+    <title>Arte & Estampa | Fotografía y Productos Personalizados</title> <!-- Título de la web -->
     <meta name="description" content="Portafolio, tienda de fotografía y venta de productos sublimados: tazas, remeras, gorras y más;">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="style.css">
+    <!-- Favicon para tu sitio web -->
+    <link rel="icon" type="image/png" href="assets/favicon.png"> 
 
     <style>
         /* Estilos generales para el cuerpo y contenedores */
@@ -122,10 +124,10 @@
             <nav class="nav">
                 <ul class="nav-list">
                     <li><a href="#hero">Inicio</a></li>
+                    <li><a href="#about">Quiénes Somos</a></li>
                     <li><a href="#events">Eventos</a></li>
-                    <li><a href="#gallery">Galería</a></li>
-                    <li><a href="#services">Servicios</a></li>
                     <li><a href="#products">Tienda</a></li>
+                    <li><a href="#services">Servicios</a></li>
                     <li><a href="#contact">Contacto</a></li>
                 </ul>
             </nav>
@@ -146,10 +148,10 @@
         <button class="close-menu-btn" aria-label="Cerrar menú">&times;</button>
         <ul class="mobile-nav-list">
             <li><a href="#hero">Inicio</a></li>
+            <li><a href="#about">Quiénes Somos</a></li>
             <li><a href="#events">Eventos</a></li>
-            <li><a href="#gallery">Galería</a></li>
-            <li><a href="#services">Servicios</a></li>
             <li><a href="#products">Tienda</a></li>
+            <li><a href="#services">Servicios</a></li>
             <li><a href="#contact">Contacto</a></li>
         </ul>
     </div>
@@ -407,13 +409,22 @@
             <h2>Panel de Administración</h2>
             <p class="subtitle">Gestiona la configuración de la tienda.</p>
             <div class="form-group">
-                <label for="individual-photo-price">Precio Foto Individual:</label>
-                <input type="number" id="individual-photo-price" min="0" step="100">
+                <label for="photo-price-tier-1">Precio Foto (1 unidad):</label>
+                <input type="number" id="photo-price-tier-1" min="0" step="100">
             </div>
             <div class="form-group">
-                <label for="pack-20-photos-price">Precio Pack 20 Fotos:</label>
-                <input type="number" id="pack-20-photos-price" min="0" step="100">
+                <label for="photo-price-tier-2">Precio Foto (2-10 unidades):</label>
+                <input type="number" id="photo-price-tier-2" min="0" step="100">
             </div>
+            <div class="form-group">
+                <label for="photo-price-tier-3">Precio Foto (11-20 unidades):</label>
+                <input type="number" id="photo-price-tier-3" min="0" step="100">
+            </div>
+            <div class="form-group">
+                <label for="photo-price-tier-4">Precio Foto (21+ unidades):</label>
+                <input type="number" id="photo-price-tier-4" min="0" step="100">
+            </div>
+            <button id="save-photo-prices-btn" class="btn btn-primary">Guardar Precios de Fotos</button>
 
             <h3>Precios de Productos Sublimados</h3>
             <div class="form-group">
@@ -428,7 +439,7 @@
                 <p class="event-placeholder">Selecciona un producto para modificar su precio.</p>
             </div>
 
-            <button id="save-prices-btn" class="btn btn-primary">Guardar Precios</button>
+            <button id="save-product-prices-btn" class="btn btn-primary">Guardar Precio de Producto</button>
             <p id="price-update-message" class="message"></p>
 
             <h3 id="admin-generate-link-header">Generar Enlace de Descarga por IDs</h3>
