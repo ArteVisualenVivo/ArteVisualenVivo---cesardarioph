@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let allGalleryEvents = {};      // Almacena todos los eventos de galería (categorías de data.json sin isProductCategory)
     let allPhotos = [];             // Almacena todas las fotos y videos individuales de todos los eventos
-    let eventPreviews = [];         // Almacena eventos para la sección "Eventos Destacados"
+    let featuredProductsAndOffers = []; // Almacena productos para la sección "Productos Destacados y Ofertas"
     let allProducts = [];           // Almacena todos los productos de la tienda (de data.json, isProductCategory: true)
     let currentFilteredPhotos = []; // Las fotos/videos actualmente mostrados en la galería (filtrados por evento)
     let currentLightboxItems = [];  // Los ítems (fotos o imágenes de productos) actualmente vistos en el lightbox
@@ -105,16 +105,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Secciones Principales
         heroSection: document.getElementById('hero'),
-        eventsContainer: document.getElementById('featured-events-container'), // Este es el contenedor, no la sección en sí
-        gallerySection: document.getElementById('gallery'),
+        featuredProductsOffersContainer: document.getElementById('featured-products-offers-container'), // NOW for featured products/offers
+        gallerySection: document.getElementById('gallery'), // Still for photos/videos
         photoGrid: document.getElementById('photoGrid'),
         categoryFilter: document.getElementById('categoryFilter'),
         currentEventGalleryTitle: document.getElementById('current-event-gallery-title'),
-        featuredProductsGrid: document.getElementById('featuredProductsGrid'),
-        servicesSection: document.getElementById('services'), // Referencia a la sección de servicios
-        productsSection: document.getElementById('products'),   // Referencia a la sección de productos
-        contactSection: document.getElementById('contact'),     // Referencia a la sección de contacto
-        aboutSection: document.getElementById('about'), // Referencia a la sección "Quiénes Somos"
+        featuredProductsGrid: document.getElementById('featuredProductsGrid'), // Main product listing
+        servicesSection: document.getElementById('services'),
+        productsSection: document.getElementById('products'),
+        contactSection: document.getElementById('contact'),
+        aboutSection: document.getElementById('about'),
 
         // Pie de página
         footer: document.querySelector('footer'),
@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Sumar ítems en el carrito
         selectedItems.forEach(itemInCart => {
             if (itemInCart.type === 'photo') {
-                photoCount += itemInCart.quantity; // Suma la cantidad REAL de cada foto
+                photoCount += itemInCart.quantity; // Suma la cantidad REAL de cada foto (que ahora siempre será 1 si está seleccionada)
             } else if (itemInCart.type === 'product') {
                 total += itemInCart.itemData.price * itemInCart.quantity; // Usar el precio actual almacenado en itemData
             }
@@ -306,8 +306,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const mapKey = 'photo_' + id;
             const selectButton = card.querySelector('.select-button');
 
-            // Verificar si CUALQUIER cantidad de esta foto está en el carrito
-            if (selectedItems.has(mapKey) && selectedItems.get(mapKey).quantity > 0) {
+            // Verificar si la foto está seleccionada (cantidad 1)
+            if (selectedItems.has(mapKey) && selectedItems.get(mapKey).quantity === 1) {
                 card.classList.add('selected');
                 if (selectButton) {
                     selectButton.innerHTML = '<i class="fas fa-check-circle"></i> Seleccionado';
@@ -322,7 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Para productos de la tienda
+        // Para productos de la tienda (sin cambios)
         document.querySelectorAll('.product-card').forEach(card => {
             const id = card.dataset.id;
             // Verificar si CUALQUIERA de las variantes de este producto está en el carrito para la clase 'selected'
@@ -359,8 +359,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (currentLightboxContext === 'gallery') {
                 const mapKey = 'photo_' + currentItemId;
-                // Si la foto ya está en el carrito (con cantidad > 0), el botón se deshabilita y cambia el texto
-                if (selectedItems.has(mapKey) && selectedItems.get(mapKey).quantity > 0) {
+                // Si la foto ya está en el carrito (con cantidad 1), el botón se deshabilita y cambia el texto
+                if (selectedItems.has(mapKey) && selectedItems.get(mapKey).quantity === 1) {
                     if (elements.addToSelectionBtn) {
                         elements.addToSelectionBtn.textContent = 'Ya Seleccionado';
                         elements.addToSelectionBtn.disabled = true;
@@ -455,8 +455,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const itemInfo = document.createElement('div');
                 itemInfo.className = 'selected-item-info';
-                // Mostrar la cantidad actual y el precio total de esa cantidad de fotos
-                // AHORA USA EL PRECIO POR TRAMOS PARA MOSTRAR EL PRECIO UNITARIO
+                // Mostrar el precio unitario del tramo actual
                 let displayPricePerPhoto = CONFIG.PHOTO_PRICE_TIER_1;
                 if (itemInCart.quantity >= 2 && itemInCart.quantity <= 10) {
                     displayPricePerPhoto = CONFIG.PHOTO_PRICE_TIER_2;
@@ -468,29 +467,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 itemInfo.innerHTML = `
                     <h5>${item.name || `Foto ${item.id}`}</h5>
                     <p class="item-price">${formatCurrency(displayPricePerPhoto)} c/u</p>
-                    <p class="quantity-value">Cantidad: ${itemInCart.quantity}</p> <!-- Mostrar solo la cantidad -->
+                    <!-- Eliminado: <p class="quantity-value">Cantidad: ${itemInCart.quantity}</p> -->
                 `;
 
-                // NO SE RENDERIZAN LOS BOTONES DE CANTIDAD PARA FOTOS
-                // const quantityControl = document.createElement('div');
-                // quantityControl.className = 'quantity-control';
-                // quantityControl.innerHTML = `
-                //     <button class="quantity-minus-btn" data-id="${item.id}" data-type="photo">-</button>
-                //     <span class="quantity-value">${itemInCart.quantity}</span>
-                //     <button class="quantity-plus-btn" data-id="${item.id}" data-type="photo">+</button>
-                // `;
-
-                // // Añadir listeners a los botones de cantidad
-                // quantityControl.querySelector('.quantity-minus-btn').addEventListener('click', (e) => {
-                //     e.stopPropagation(); 
-                //     updateItemQuantity(item.id, null, -1, 'photo');
-                // });
-                // quantityControl.querySelector('.quantity-plus-btn').addEventListener('click', (e) => {
-                //     e.stopPropagation(); 
-                //     updateItemQuantity(item.id, null, 1, 'photo');
-                // });
-
-                const removeButton = document.createElement('button'); // Declarar removeButton aquí
+                const removeButton = document.createElement('button');
                 removeButton.className = 'remove-item-btn';
                 removeButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
                 removeButton.addEventListener('click', (e) => {
@@ -501,13 +481,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 listItem.appendChild(itemImage);
                 listItem.appendChild(itemInfo);
-                // listItem.appendChild(quantityControl); // NO SE AÑADE EL CONTROL DE CANTIDAD PARA FOTOS
                 listItem.appendChild(removeButton);
                 elements.selectedItemsList.appendChild(listItem);
             });
         }
 
-        // --- Renderizar Productos Sublimados seleccionados ---
+        // --- Renderizar Productos Sublimados seleccionados (sin cambios) ---
         if (selectedProductsArray.length > 0) {
             const productHeader = document.createElement('li');
             productHeader.className = 'cart-section-header';
@@ -551,7 +530,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     updateItemQuantity(product.id, selectedImage.id, 1, 'product');
                 });
 
-                const removeButton = document.createElement('button'); // Declarar removeButton aquí también
+                const removeButton = document.createElement('button');
                 removeButton.className = 'remove-item-btn';
                 removeButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
                 removeButton.addEventListener('click', (e) => {
@@ -601,17 +580,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (type === 'photo') {
             mapKey = 'photo_' + itemData.id;
             if (selectedItems.has(mapKey)) {
-                // Si ya existe, incrementar la cantidad
-                const existingItem = selectedItems.get(mapKey);
-                existingItem.quantity += 1; // Solo se incrementa la cantidad, no se añade un nuevo item
-                selectedItems.set(mapKey, existingItem);
-                showToast('Cantidad de foto actualizada.', 'success');
+                // Si ya está seleccionada, la eliminamos (comportamiento de toggle)
+                selectedItems.delete(mapKey);
+                showToast(`"${itemData.name || `Foto ${itemData.id}`}" eliminada.`, 'info');
             } else {
-                // Si es una foto nueva, añadirla con cantidad 1
+                // Si no está seleccionada, la añadimos con cantidad 1
                 itemToStore = {
                     originalId: itemData.id,
                     type: 'photo',
-                    quantity: 1, // Cantidad inicial para fotos
+                    quantity: 1, // Siempre 1 para fotos digitales
                     itemData: itemData // Guarda los datos completos de la foto
                 };
                 selectedItems.set(mapKey, itemToStore);
@@ -663,10 +640,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateItemQuantity(id, imageId, change, itemType) {
         let mapKey;
         if (itemType === 'photo') {
-            // Para fotos, solo permitimos añadir o eliminar completamente, no cambiar la cantidad aquí.
-            // Si se llama con change, significa que se está intentando modificar la cantidad de una foto,
-            // lo cual ya no es el comportamiento deseado.
-            console.warn("WARN: Intento de modificar la cantidad de una foto digital. Esto ya no es compatible a través de los botones +/-.");
+            // Para fotos, ya no se usa esta función para cambiar la cantidad.
+            // La cantidad de fotos se gestiona por el toggle en addItemToSelection.
+            console.warn("WARN: Intento de modificar la cantidad de una foto digital a través de updateItemQuantity. Esto ya no es compatible.");
             return; // Salir de la función para fotos
         } else if (itemType === 'product') {
             mapKey = `product_${id}_${imageId}`;
@@ -720,11 +696,11 @@ document.addEventListener('DOMContentLoaded', () => {
      * Vacía toda la selección del carrito.
      */
     function clearSelection() {
-        selectedItems.clear(); // Vacía todo el Mapa
-        saveSelectionToLocalStorage(); // Guardar la selección después de vaciar
-        updateSelectionUI(); // Esto actualizará los estados de los botones
-        showToast('Tu selección ha sido vaciada.', 'info');
-        // Ya no se cierra explícitamente paymentModal aquí. Debe ser cerrado por acción del usuario.
+    selectedItems.clear(); // Vacía todo el Mapa
+    saveSelectionToLocalStorage(); // Guardar la selección después de vaciar
+    updateSelectionUI(); // Esto actualizará los estados de los botones
+    showToast('Tu selección ha sido vaciada.', 'info');
+    // Ya no se cierra explícitamente paymentModal aquí. Debe ser cerrado por acción del usuario.
     }
 
     /**
@@ -768,8 +744,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Botón de selección para fotos de galería
             elements.addToSelectionBtn.style.display = 'inline-block';
             const mapKey = 'photo_' + item.id;
-            // Si la foto ya está en el carrito (con cantidad > 0), el botón se deshabilita y cambia el texto
-            if (selectedItems.has(mapKey) && selectedItems.get(mapKey).quantity > 0) {
+            // Si la foto ya está en el carrito (con cantidad 1), el botón se deshabilita y cambia el texto
+            if (selectedItems.has(mapKey) && selectedItems.get(mapKey).quantity === 1) {
                 elements.addToSelectionBtn.textContent = 'Ya Seleccionado';
                 elements.addToSelectionBtn.disabled = true;
                 elements.addToSelectionBtn.classList.add('selected');
@@ -779,7 +755,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.addToSelectionBtn.classList.remove('selected');
             }
             elements.addToSelectionBtn.onclick = () => {
-                addItemToSelection(item, 'photo'); // Pasar el objeto foto completo
+                addItemToSelection(item, 'photo'); // Pasar el objeto foto completo (ahora con toggle)
             };
 
         } else if (context === 'product') {
@@ -879,8 +855,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Actualizar estado del botón "Seleccionar para Comprar/Añadir al Carrito"
         if (currentLightboxContext === 'gallery') {
             const mapKey = 'photo_' + newItem.id;
-            // Si la foto ya está en el carrito (con cantidad > 0), el botón se deshabilita y cambia el texto
-            if (selectedItems.has(mapKey) && selectedItems.get(mapKey).quantity > 0) {
+            // Si la foto ya está en el carrito (con cantidad 1), el botón se deshabilita y cambia el texto
+            if (selectedItems.has(mapKey) && selectedItems.get(mapKey).quantity === 1) {
                 elements.addToSelectionBtn.textContent = 'Ya Seleccionado';
                 elements.addToSelectionBtn.disabled = true;
                 elements.addToSelectionBtn.classList.add('selected');
@@ -890,7 +866,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.addToSelectionBtn.classList.remove('selected');
             }
             elements.addToSelectionBtn.onclick = () => {
-                addItemToSelection(newItem, 'photo'); // Pasar el objeto foto completo
+                addItemToSelection(newItem, 'photo'); // Pasar el objeto foto completo (ahora con toggle)
             };
         } else if (currentLightboxContext === 'product') {
             // El botón de añadir al carrito en el lightbox del producto se refiere a la variante de imagen específica
@@ -938,7 +914,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     message += `📸 Fotos y Videos (${photoCount} unidades):\n`;
                     photosAddedSection = true;
                 }
-                // Incluir la cantidad de cada foto
+                // Incluir la cantidad de cada foto (que ahora siempre será 1)
                 message += `- ${itemInCart.quantity}x ${itemInCart.itemData.name || `Foto ${itemInCart.originalId}`} (Evento: ${itemInCart.itemData.eventName || 'N/A'}, ID: ${itemInCart.originalId})\n`;
             } else if (itemInCart.type === 'product') {
                 if (!productsAddedSection) {
@@ -1024,7 +1000,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         container.innerHTML = '';
         if (itemsToRender.length === 0) {
-            container.innerHTML = '<p class="event-placeholder">No hay fotos ni videos para este evento aún. ¡Pronto subiremos más!</p>';
+            container.innerHTML = '<p class="event-placeholder">No hay fotos ni videos para mostrar en esta sección.</p>';
             return;
         }
 
@@ -1127,7 +1103,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Verificar si el producto (la primera variante por defecto) está en el carrito para la clase 'selected'
             const productHasAnyVariantInCart = Array.from(selectedItems.keys()).some(key => key.startsWith(`product_${product.id}_`));
-            if (productHasAnyVariantInCart) { 
+            if (productHasAnyVariantInCart) {
                 card.classList.add('selected');
             }
 
@@ -1193,110 +1169,190 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * Renderiza las tarjetas de vista previa de eventos en la sección "Eventos Destacados".
-     * @param {Array<object>} events - Array de objetos de evento.
+     * Renderiza las tarjetas de productos destacados y ofertas en la sección correspondiente.
+     * @param {Array<object>} products - Array de objetos de producto.
      */
-    function renderEventPreviews(events) {
-        if (!elements.eventsContainer) {
-            console.error("ERROR: El contenedor de eventos destacados no fue encontrado.");
+    function renderFeaturedProductsAndOffers(products) {
+        if (!elements.featuredProductsOffersContainer) {
+            console.error("ERROR: El contenedor de productos destacados y ofertas no fue encontrado.");
             return;
         }
-        elements.eventsContainer.innerHTML = ''; // Limpiar contenedor
-        if (events.length === 0) {
-            elements.eventsContainer.innerHTML = '<p class="event-placeholder">No hay eventos destacados disponibles.</p>';
-            console.log("DEBUG: No hay eventos destacados para renderizar.");
+        elements.featuredProductsOffersContainer.innerHTML = ''; // Limpiar contenedor
+        if (products.length === 0) {
+            elements.featuredProductsOffersContainer.innerHTML = '<p class="event-placeholder">No hay productos destacados u ofertas disponibles en este momento.</p>';
+            console.log("DEBUG: No hay productos destacados para renderizar.");
             return;
         }
 
-        events.forEach(event => {
-            // Asegurarse de que solo se tomen categorías que no sean de productos
-            if (event.isProductCategory) {
-                console.log(`DEBUG: Saltando categoría de producto en vista previa de eventos: ${event.name}`);
-                return; 
-            }
+        // Tomar un subconjunto de productos para destacar (ej. los primeros 4 o 6)
+        const featuredCount = Math.min(products.length, 6); // Limitar a un máximo de 6
+        const productsToFeature = products.slice(0, featuredCount);
 
-            // firstImage.src ya debería venir con el prefijo 'galeria/' desde loadDataFromJSON
-            const firstImage = event.content && event.content.find(item => item.type === 'image'); // Encontrar la primera imagen del evento
-            if (!firstImage) {
-                console.warn(`WARN: El evento "${event.name}" no tiene imágenes para la vista previa.`);
-                return; // Si no hay imágenes en el evento, no renderizar la tarjeta
-            }
+        productsToFeature.forEach(product => {
+            const card = document.createElement('div');
+            card.classList.add('event-card'); // Reutilizar la clase 'event-card' para el estilo
+            card.dataset.productId = product.id; // Usar productId para identificar
 
-            const eventCard = document.createElement('div');
-            eventCard.classList.add('event-card');
-            eventCard.dataset.eventName = event.name;
+            const firstImageSrc = product.images && product.images.length > 0
+                ? product.images[0].src
+                : 'https://placehold.co/400x300/cccccc/333333?text=No+Imagen';
 
-            const imageUrl = firstImage.src; // Aquí, firstImage.src ya debería tener el prefijo 'galeria/'
-            eventCard.innerHTML = `
-                <img src="${imageUrl}" alt="Portada de ${event.name}" class="event-card-img">
+            card.innerHTML = `
+                <img src="${firstImageSrc}" alt="Portada de ${product.name}" class="event-card-img">
                 <div class="event-card-info">
-                    <h3>${event.name}</h3>
-                    <p>${event.content.length} fotos/videos</p>
-                    <button class="btn btn-secondary view-event-btn">Ver Galería</button>
+                    <h3>${product.name}</h3>
+                    <p class="product-price-featured">${formatCurrency(product.price || 0)}</p>
+                    <button class="btn btn-secondary view-product-btn">Ver Producto</button>
                 </div>
             `;
-            elements.eventsContainer.appendChild(eventCard);
-            console.log(`DEBUG: Renderizando vista previa de evento: ${imageUrl} con botón "Ver Galería".`);
+            elements.featuredProductsOffersContainer.appendChild(card);
+            console.log(`DEBUG: Renderizando producto destacado: ${product.name}`);
 
-
-            // Añadir listener al botón "Ver Galería"
-            const viewEventBtn = eventCard.querySelector('.view-event-btn');
-            if (viewEventBtn) {
-                viewEventBtn.addEventListener('click', () => {
-                    console.log(`DEBUG: Clic en botón "Ver Galería" para el evento: ${event.name}`);
-                    filterGalleryByCategory(event.name);
-                    if (elements.gallerySection) elements.gallerySection.style.display = 'block'; // Hacer visible la galería
-                    if (elements.categoryFilter) elements.categoryFilter.value = event.name;
-                    if (elements.gallerySection) elements.gallerySection.scrollIntoView({ behavior: 'smooth' });
+            // Añadir listener al botón "Ver Producto"
+            const viewProductBtn = card.querySelector('.view-product-btn');
+            if (viewProductBtn) {
+                viewProductBtn.addEventListener('click', () => {
+                    console.log(`DEBUG: Clic en botón "Ver Producto" para: ${product.name}`);
+                    // Navegar a la sección de productos y abrir el lightbox para este producto
+                    if (elements.productsSection) elements.productsSection.scrollIntoView({ behavior: 'smooth' });
+                    // Abrir lightbox con el producto (la primera imagen)
+                    openLightbox(product, 0, 'product');
                 });
             } else {
-                console.warn(`WARN: Botón "Ver Galería" no encontrado para el evento: ${event.name}`);
+                console.warn(`WARN: Botón "Ver Producto" no encontrado para el producto: ${product.name}`);
             }
         });
     }
 
     /**
-     * Rellena el menú desplegable de filtro de categorías con nombres de eventos.
+     * Renderiza las tarjetas de las categorías principales de la galería (ej. 15años, boliches, casamiento).
+     * Al hacer clic, se filtra por esa categoría y se muestran sus álbumes o fotos directas.
+     */
+    function renderMainGalleryCategories() {
+        if (!elements.photoGrid || !elements.currentEventGalleryTitle || !elements.categoryFilter) return;
+
+        elements.photoGrid.innerHTML = ''; // Limpiar la cuadrícula
+        elements.currentEventGalleryTitle.textContent = 'Selecciona una Galería de Eventos';
+        elements.categoryFilter.style.display = 'none'; // Ocultar el desplegable inicialmente
+
+        const galleryCategoryNames = Object.keys(allGalleryEvents).filter(name => !allGalleryEvents[name].isProductCategory).sort();
+
+        if (galleryCategoryNames.length === 0) {
+            elements.photoGrid.innerHTML = '<p class="event-placeholder">No hay galerías de eventos disponibles aún. ¡Pronto subiremos más!</p>';
+            return;
+        }
+
+        galleryCategoryNames.forEach(categoryName => {
+            const category = allGalleryEvents[categoryName];
+            const card = document.createElement('div');
+            card.className = 'event-card gallery-category-card'; // Usar event-card para estilo, añadir clase específica
+            card.dataset.categoryName = categoryName;
+
+            // Usar la primera imagen del primer álbum o de contenido directo como portada
+            let coverImageSrc = 'https://placehold.co/400x300/cccccc/333333?text=Sin+Portada';
+            if (category.albums && category.albums.length > 0 && category.albums[0].content.length > 0) {
+                coverImageSrc = category.albums[0].content[0].src;
+            } else if (category.content && category.content.length > 0) {
+                coverImageSrc = category.content[0].src;
+            }
+
+            card.innerHTML = `
+                <img src="${coverImageSrc}" alt="Portada de ${category.name}" class="event-card-img">
+                <div class="event-card-info">
+                    <h3>${category.name}</h3>
+                    <button class="btn btn-secondary view-gallery-btn">Ver Galería</button>
+                </div>
+            `;
+            elements.photoGrid.appendChild(card);
+
+            const viewGalleryBtn = card.querySelector('.view-gallery-btn');
+            if (viewGalleryBtn) {
+                viewGalleryBtn.addEventListener('click', () => {
+                    console.log(`DEBUG: Clic en "Ver Galería" para: ${categoryName}`);
+                    filterGalleryByCategory(categoryName); // Filtrar por la categoría principal
+                    elements.categoryFilter.value = categoryName; // Establecer el desplegable
+                    elements.categoryFilter.style.display = 'block'; // Mostrar el desplegable
+                    elements.gallerySection.scrollIntoView({ behavior: 'smooth' }); // Desplazarse a la galería
+                });
+            }
+        });
+    }
+
+
+    /**
+     * Rellena el menú desplegable de filtro de categorías con nombres de eventos y álbumes.
      */
     function populateCategoryFilter() {
         if (!elements.categoryFilter) return;
+        
         // Guardar la opción "Todas las Fotos de Eventos"
-        const allOption = elements.categoryFilter.querySelector('option[value="all"]');
+        const allOption = document.createElement('option');
+        allOption.value = 'all';
+        allOption.textContent = 'Todas las Fotos de Eventos';
         elements.categoryFilter.innerHTML = ''; // Limpiar opciones existentes
-        if (allOption) elements.categoryFilter.appendChild(allOption); // Añadir "Todas" de nuevo
+        elements.categoryFilter.appendChild(allOption);
 
-        Object.keys(allGalleryEvents).sort().forEach(eventName => {
-            const option = document.createElement('option');
-            option.value = eventName;
-            option.textContent = eventName;
-            elements.categoryFilter.appendChild(option);
+        const sortedEventNames = Object.keys(allGalleryEvents)
+                                    .filter(name => !allGalleryEvents[name].isProductCategory)
+                                    .sort();
+
+        sortedEventNames.forEach(eventName => {
+            const category = allGalleryEvents[eventName];
+            
+            // Añadir la categoría principal como opción
+            const mainOption = document.createElement('option');
+            mainOption.value = category.name;
+            mainOption.textContent = category.name;
+            elements.categoryFilter.appendChild(mainOption);
+
+            // Añadir los álbumes como sub-opciones
+            if (category.albums && category.albums.length > 0) {
+                category.albums.forEach(album => {
+                    const albumOption = document.createElement('option');
+                    // El valor será la ruta completa para un filtrado preciso
+                    albumOption.value = `${category.name}/${album.name}`; 
+                    albumOption.textContent = `— ${category.name} / ${album.name}`; // Formato anidado
+                    elements.categoryFilter.appendChild(albumOption);
+                });
+            }
         });
     }
 
     /**
-     * Aplica el filtro de categoría a la galería de fotos.
-     * @param {string} categoryName - El nombre de la categoría a filtrar ('all' para todas).
+     * Aplica el filtro de categoría/álbum a la galería de fotos.
+     * @param {string} selectedPath - El nombre de la categoría principal, la ruta del álbum ('categoria/album'), o 'all'.
      */
-    function filterGalleryByCategory(categoryName) {
-        console.log(`DEBUG: filterGalleryByCategory llamado con categoría: ${categoryName}`);
-        if (!elements.photoGrid || !elements.currentEventGalleryTitle) return;
+    function filterGalleryByCategory(selectedPath) {
+        console.log(`DEBUG: filterGalleryByCategory llamado con selectedPath: ${selectedPath}`);
+        if (!elements.photoGrid || !elements.currentEventGalleryTitle || !elements.categoryFilter) return;
         
-        // Asegurarse de que la sección de la galería esté visible cuando se filtra
-        if (elements.gallerySection) {
-            elements.gallerySection.style.display = 'block';
-        }
+        elements.categoryFilter.style.display = 'block'; // Asegurar que el desplegable esté visible
 
-        if (categoryName === 'all') {
-            currentFilteredPhotos = [...allPhotos]; // Mostrar todas las fotos
-            elements.currentEventGalleryTitle.textContent = 'Todas las Fotos de Eventos';
+        let photosToDisplay = [];
+        let titleText = '';
+
+        if (selectedPath === 'all') {
+            photosToDisplay = [...allPhotos];
+            titleText = 'Todas las Fotos de Eventos';
         } else {
-            // Asegurar que el contenido ya procesado con el prefijo 'galeria/' sea usado
-            currentFilteredPhotos = allGalleryEvents[categoryName] ? 
-                                    [...allGalleryEvents[categoryName].content] : // Copiar array, los ítems ya tienen src con 'galeria/'
-                                    [];
-            elements.currentEventGalleryTitle.textContent = `Fotos del Evento: ${categoryName}`;
+            // Buscar si es una categoría principal (ej. "15años")
+            const mainCategory = allGalleryEvents[selectedPath];
+            if (mainCategory && !mainCategory.isProductCategory) {
+                // Si es una categoría principal, incluir todas sus fotos directas y las de todos sus álbumes
+                photosToDisplay = allPhotos.filter(photo => photo.eventName.startsWith(selectedPath));
+                titleText = `Fotos del Evento: ${selectedPath}`;
+            } else {
+                // Si no es una categoría principal, asumir que es un álbum (ej. "boliches/Zen")
+                photosToDisplay = allPhotos.filter(photo => photo.eventName === selectedPath);
+                // Extraer el nombre del álbum para el título
+                const pathParts = selectedPath.split('/');
+                const albumName = pathParts[pathParts.length - 1];
+                titleText = `Fotos del Álbum: ${albumName}`;
+            }
         }
-        renderGalleryGrid(elements.photoGrid, currentFilteredPhotos); // Usar renderGalleryGrid para fotos/videos
+        
+        elements.currentEventGalleryTitle.textContent = titleText;
+        renderGalleryGrid(elements.photoGrid, photosToDisplay);
         updateGridButtonsState(); // Actualizar los estados de los botones después de renderizar
     }
 
@@ -1316,17 +1372,16 @@ document.addEventListener('DOMContentLoaded', () => {
             // Restablecer arrays para evitar duplicados en recargas
             allGalleryEvents = {};
             allPhotos = [];
-            eventPreviews = [];
+            featuredProductsAndOffers = []; // Reset this array
             allProducts = [];
 
             // Procesar datos cargados para separar eventos y productos
             data.forEach(category => {
                 if (category.isProductCategory) {
                     // Procesar productos
-                    allProducts = category.products.map(p => {
+                    const processedProducts = category.products.map(p => {
                         const processedImages = p.images.map(img => ({
                             ...img,
-                            // CORRECCIÓN DEFINITIVA AQUÍ:
                             // La propiedad 'src' en data.json para los productos ya incluye la ruta completa desde 'tienda-productos/'
                             // Por lo tanto, solo necesitamos anteponer 'galeria/'.
                             src: `galeria/${img.src}`, 
@@ -1346,55 +1401,78 @@ document.addEventListener('DOMContentLoaded', () => {
                             src: processedImages.length > 0 ? processedImages[0].src : 'https://placehold.co/400x300/cccccc/333333?text=No+Imagen'
                         };
                     });
-                    console.log("DEBUG: allProducts processed with paths:", allProducts.map(p => p.images[0]?.src || 'N/A')); // Added for debugging
+                    allProducts.push(...processedProducts); // Add to the main allProducts array
+                    console.log(`DEBUG: Processed product category: ${category.name}. Products count: ${processedProducts.length}`);
+
                 } else {
                     // Process event content to add 'galeria/' prefix
-                    const processedEventContent = category.content.map(item => ({
+                    // Ahora maneja 'content' directo y 'albums'
+                    const processedEventContent = category.content ? category.content.map(item => ({
                         ...item,
                         src: `galeria/${item.src}`, // PREPEND 'galeria/' for event content
                         name: item.name || item.src.split(/[\/\\]/).pop().split('.')[0]
-                    }));
+                    })) : [];
 
-                    // Store in allGalleryEvents with processed content
+                    const processedAlbums = category.albums ? category.albums.map(album => ({
+                        ...album,
+                        content: album.content.map(item => ({ // Procesar contenido dentro de cada álbum
+                            ...item,
+                            src: `galeria/${item.src}`,
+                            name: item.name || item.src.split(/[\/\\]/).pop().split('.')[0]
+                        }))
+                    })) : [];
+
+                    // Store in allGalleryEvents with processed content and albums
                     const processedCategory = {
                         ...category,
-                        content: processedEventContent // Use processed content
+                        content: processedEventContent, // Direct content of the category
+                        albums: processedAlbums // Sub-albums
                     };
                     allGalleryEvents[category.name] = processedCategory;
 
-                    // Add to allPhotos and eventPreviews directly the processedCategory object
-                    // as its items.src already have the 'galeria/' prefix
+                    // Add to allPhotos (flattened list for gallery display)
                     processedEventContent.forEach(item => {
                         allPhotos.push({
                             ...item,
-                            eventName: category.name
+                            eventName: category.name // Add eventName for filtering
+                        });
+                    });
+                    processedAlbums.forEach(album => {
+                        album.content.forEach(item => {
+                            allPhotos.push({
+                                ...item,
+                                eventName: `${category.name}/${album.name}` // More specific eventName for nested items
+                            });
                         });
                     });
                     
-                    // Add to eventPreviews the category object with processed content
-                    eventPreviews.push(processedCategory); 
+                    console.log(`DEBUG: Processed event category: ${category.name}. Direct photos: ${processedEventContent.length}, Albums: ${processedAlbums.length}`);
                 }
             });
 
             allPhotos.sort((a, b) => a.src.localeCompare(b.src)); // Sort gallery photos
+            allProducts.sort((a, b) => a.name.localeCompare(b.name)); // Sort all products
+
+            // Populate featuredProductsAndOffers with a subset of allProducts (e.g., the first few)
+            featuredProductsAndOffers = allProducts.slice(0, Math.min(allProducts.length, 6)); // Take first 6 products as featured
+
             console.log("DEBUG: allPhotos processed and sorted.", allPhotos);
-            console.log("DEBUG: IDs de todas las fotos disponibles (allPhotos):", allPhotos.map(p => p.id)); // NUEVO: IDs de todas las fotos cargadas
-            console.log("DEBUG: allProducts processed.", allProducts);
+            console.log("DEBUG: IDs de todas las fotos disponibles (allPhotos):", allPhotos.map(p => p.id));
+            console.log("DEBUG: allProducts processed and sorted.", allProducts);
             console.log("DEBUG: allGalleryEvents processed.", allGalleryEvents);
+            console.log("DEBUG: featuredProductsAndOffers populated.", featuredProductsAndOffers);
 
             // Initial rendering of main page content
-            renderEventPreviews(eventPreviews); 
-            populateCategoryFilter();
-            // REMOVED: elements.gallerySection.style.display = 'block'; // Gallery starts hidden
-            // REMOVED: filterGalleryByCategory('all'); // Gallery starts hidden, no initial filter
-            renderGridForProducts(elements.featuredProductsGrid, allProducts);
+            renderFeaturedProductsAndOffers(featuredProductsAndOffers); // Render featured products
+            renderGridForProducts(elements.featuredProductsGrid, allProducts); // Render all products in the main store section
+            populateCategoryFilter(); // Populate filter for photo gallery only
             updateSelectionUI(); // Ensure cart updates and buttons reflect status
 
         } catch (error) {
             console.error("Critical error loading or processing data.json:", error);
             showToast("Critical error loading gallery. Please contact support.", 'error');
             // Ensure error messages are displayed even if elements are null due to download mode
-            if (elements.eventsContainer) elements.eventsContainer.innerHTML = '<p class="event-placeholder">Sorry! There was a problem loading events. Please try again later.</p>';
+            if (elements.featuredProductsOffersContainer) elements.featuredProductsOffersContainer.innerHTML = '<p class="event-placeholder">Sorry! There was a problem loading featured products. Please try again later.</p>';
             if (elements.featuredProductsGrid) elements.featuredProductsGrid.innerHTML = '<p class="event-placeholder">Sorry! There was a problem loading products. Please try again later.</p>';
             if (elements.gallerySection) elements.gallerySection.style.display = 'none'; // Hide if failed
         }
@@ -1672,7 +1750,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Obtener todas las secciones relevantes y elementos flotantes
         const mainSections = [
             elements.heroSection,
-            document.getElementById('events'), // Obtener explícitamente la sección 'events'
+            document.getElementById('featured-products-offers'), // Obtener explícitamente la sección 'featured-products-offers'
             elements.gallerySection,
             elements.servicesSection,
             elements.productsSection,
@@ -1766,6 +1844,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const hash = window.location.hash;
         console.log("DEBUG: handleRouting llamado, hash:", hash);
 
+        // Ocultar el filtro de categoría por defecto al cargar cualquier hash,
+        // se mostrará solo si se navega a una vista de galería específica.
+        if (elements.categoryFilter) {
+            elements.categoryFilter.style.display = 'none';
+        }
+
         if (hash.startsWith('#download?ids=')) {
             // Página de Descarga del Cliente
             console.log("DEBUG: Enrutando a la página de descarga del cliente.");
@@ -1816,7 +1900,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     targetHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     console.log("DEBUG: handleRouting: Intento de scrollIntoView del panel de administración.");
                 } else {
-                    console.warn("WARN: handleRouting: No se encontró targetHeader (admin-generate-link-header) para el desplazamiento. Intentando scrollTop 0.");
+                    console.warn("WARN: handleRouting: No se encontró targetHeader (admin-generate-link-header) para el desplazamiento de fallback. Intentando scrollTop 0.");
                     if (adminPanelContent) {
                         adminPanelContent.scrollTop = 0; // Fallback
                     } else {
@@ -1839,13 +1923,49 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 showToast('IDs recibidos del cliente. Enlace de descarga generado.', 'info');
             }, 500); // Retraso reducido a 500 ms
+        } else if (hash === '#gallery') {
+            // Cuando se navega a la sección de galería sin un filtro específico,
+            // mostrar las categorías principales de eventos.
+            console.log("DEBUG: Enrutando a la galería principal (categorías de eventos).");
+            setMainPageDisplay(true);
+            renderMainGalleryCategories(); // NUEVO: Renderizar las categorías principales
+            elements.gallerySection.style.display = 'block'; // Asegurar que la sección de galería esté visible
+            elements.currentEventGalleryTitle.textContent = 'Selecciona una Galería de Eventos';
+            elements.categoryFilter.style.display = 'none'; // Ocultar el desplegable
+            window.scrollTo(0, 0); // Desplazarse al inicio de la página
+
+        } else if (hash.startsWith('#gallery?category=')) {
+            // Si el hash indica una categoría específica (ej. #gallery?category=15años)
+            console.log("DEBUG: Enrutando a galería con categoría específica.");
+            setMainPageDisplay(true);
+            const categoryName = hash.split('=')[1];
+            filterGalleryByCategory(categoryName);
+            if (elements.categoryFilter) elements.categoryFilter.value = categoryName; // Seleccionar en el desplegable
+            elements.gallerySection.style.display = 'block'; // Asegurar que la sección de galería esté visible
+            elements.categoryFilter.style.display = 'block'; // Mostrar el desplegable
+            window.scrollTo(0, 0); // Desplazarse al inicio de la página
+
+        } else if (hash.startsWith('#gallery?album=')) {
+            // Si el hash indica un álbum específico (ej. #gallery?album=boliches/Zen)
+            console.log("DEBUG: Enrutando a galería con álbum específico.");
+            setMainPageDisplay(true);
+            const albumPath = hash.split('=')[1];
+            filterGalleryByCategory(albumPath);
+            if (elements.categoryFilter) elements.categoryFilter.value = albumPath; // Seleccionar en el desplegable
+            elements.gallerySection.style.display = 'block'; // Asegurar que la sección de galería esté visible
+            elements.categoryFilter.style.display = 'block'; // Mostrar el desplegable
+            window.scrollTo(0, 0); // Desplazarse al inicio de la página
+
         } else {
-            // Vista normal de la página (sin hash específico)
+            // Vista normal de la página (sin hash específico o hash no reconocido)
             console.log("DEBUG: Enrutando a la vista normal de la página.");
             setMainPageDisplay(true); // Mostrar elementos de la página principal
-            // Añadir log para verificar estado de overflow
-            console.log("DEBUG: overflow-y de HTML (vista normal):", document.documentElement.style.overflowY || window.getComputedStyle(document.documentElement).overflowY);
-            console.log("DEBUG: overflow-y de Body (vista normal):", document.body.style.overflowY || window.getComputedStyle(document.body).overflowY);
+            // Asegurarse de que la galería esté en su estado inicial (categorías)
+            renderMainGalleryCategories(); 
+            elements.gallerySection.style.display = 'block'; // Asegurar que la sección de galería esté visible
+            elements.currentEventGalleryTitle.textContent = 'Selecciona una Galería de Eventos';
+            elements.categoryFilter.style.display = 'none'; // Ocultar el desplegable
+            window.scrollTo(0, 0); // Desplazarse al inicio de la página
         }
     }
 

@@ -17,133 +17,161 @@ function simpleHash(str) {
 }
 
 // Función para explorar directorios y generar datos de forma recursiva
+// Ahora soporta subcarpetas dentro de eventos de galería como álbumes.
 function generateGalleryData(dir) {
-    const events = [];
+    const categories = []; // Renombrado de 'events' a 'categories' para ser más general
     const entries = fs.readdirSync(dir, { withFileTypes: true });
 
     for (const entry of entries) {
         const entryPath = path.join(dir, entry.name);
-        
-        if (entry.isDirectory()) {
-            const categoryName = entry.name;
-            let categoryContent = [];
-            let isProductCategory = false; // Bandera para diferenciar productos
+        // Solo procesar directorios en el nivel raíz de 'galeria'
+        if (!entry.isDirectory()) continue; 
 
-            // Si el nombre de la carpeta es "tienda-productos", la tratamos como categoría de productos
-            if (categoryName === 'tienda-productos') {
-                isProductCategory = true;
-                const products = [];
-                const productEntries = fs.readdirSync(entryPath, { withFileTypes: true });
+        const categoryName = entry.name;
+        let isProductCategory = false;
 
-                for (const productEntry of productEntries) {
-                    const productPath = path.join(entryPath, productEntry.name);
-                    if (productEntry.isDirectory()) {
-                        const productName = productEntry.name;
-                        const productImages = [];
-                        
-                        // Leer contenido de la carpeta de producto (imágenes/videos)
-                        const itemEntries = fs.readdirSync(productPath, { withFileTypes: true });
-                        for (const itemEntry of itemEntries) {
-                            const itemFullPath = path.join(productPath, itemEntry.name);
-                            // La ruta src debe ser relativa a la carpeta 'galeria/'
-                            const itemRelativePath = path.relative(galleryDir, itemFullPath).replace(/\\/g, '/'); // Asegurar barras correctas
-                            const fileExtension = path.extname(itemEntry.name).toLowerCase();
-                            let type = 'unknown';
+        // Si el nombre de la carpeta es una de las categorías de productos, la tratamos como tal.
+        if (['tienda-productos', 'libreria', 'papeleria', 'estampados'].includes(categoryName)) {
+            isProductCategory = true;
+            const products = [];
+            const productEntries = fs.readdirSync(entryPath, { withFileTypes: true });
 
-                            if (['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.jfif'].includes(fileExtension)) {
-                                type = 'image';
-                            } else if (['.mp4', '.mov', '.avi', '.webm'].includes(fileExtension)) {
-                                type = 'video';
-                            }
+            for (const productEntry of productEntries) {
+                const productPath = path.join(entryPath, productEntry.name);
+                // Solo procesar subdirectorios como productos individuales
+                if (!productEntry.isDirectory()) continue; 
 
-                            if (type !== 'unknown') {
-                                productImages.push({
-                                    id: simpleHash(itemRelativePath), // ID estable basado en la ruta relativa
-                                    type: type,
-                                    src: itemRelativePath, // Ruta relativa a 'galeria/'
-                                    name: itemEntry.name.split('.')[0] // Nombre sin extensión
-                                });
-                            }
-                        }
-                        // Ordenar imágenes de producto por nombre de archivo
-                        productImages.sort((a, b) => a.src.localeCompare(b.src));
+                const productName = productEntry.name;
+                const productImages = [];
+                const imageEntries = fs.readdirSync(productPath, { withFileTypes: true });
 
-                        if (productImages.length > 0) {
-                            products.push({
-                                id: simpleHash(path.relative(galleryDir, productPath)), // ID estable para el producto
-                                name: productName,
-                                path: path.relative(galleryDir, productPath).replace(/\\/g, '/'), // Ruta relativa del producto
-                                images: productImages
+                for (const imageEntry of imageEntries) {
+                    if (imageEntry.isFile()) {
+                        const imageExt = path.extname(imageEntry.name).toLowerCase();
+                        if (['.jpg', '.jpeg', '.png', '.gif', '.jfif', '.webp'].includes(imageExt)) {
+                            const relativePath = path.relative(galleryDir, path.join(productPath, imageEntry.name)).replace(/\\/g, '/');
+                            productImages.push({
+                                id: simpleHash(relativePath), // ID estable basado en la ruta relativa
+                                type: 'image',
+                                src: relativePath, // Ruta relativa desde 'galeria'
+                                name: path.basename(imageEntry.name, imageExt)
                             });
                         }
                     }
                 }
-                // Ordenar productos por nombre
-                products.sort((a, b) => a.name.localeCompare(b.name));
-                categoryContent = products; // El contenido de la categoría de productos son los productos
+                // Ordenar las imágenes del producto por nombre de archivo para consistencia
+                productImages.sort((a, b) => a.src.localeCompare(b.src));
 
-            } else { // Es una categoría de evento normal
-                // Función recursiva para encontrar archivos de medios
-                function findMediaFiles(currentPath, currentRelativePath) {
-                    const currentEntries = fs.readdirSync(currentPath, { withFileTypes: true });
-                    const mediaFiles = [];
+                // Asignar un precio por defecto si no existe (puedes ajustarlo)
+                const defaultProductPrice = 1500; 
 
-                    for (const currentEntry of currentEntries) {
-                        const subPath = path.join(currentPath, currentEntry.name);
-                        const subRelativePath = path.join(currentRelativePath, currentEntry.name).replace(/\\/g, '/');
+                products.push({
+                    id: simpleHash(path.relative(galleryDir, productPath).replace(/\\/g, '/')), // ID estable para el producto
+                    name: productName,
+                    path: path.relative(galleryDir, productPath).replace(/\\/g, '/'),
+                    price: defaultProductPrice, // Precio por defecto
+                    images: productImages // Asegurarse de que images siempre sea un array
+                });
+            }
+            products.sort((a, b) => a.name.localeCompare(b.name));
+            categories.push({
+                name: categoryName,
+                path: categoryName,
+                isProductCategory: true,
+                products: products
+            });
+        } else {
+            // Lógica para categorías de galería (fotos/videos de eventos como 15años, boliches, casamiento)
+            let categoryDirectContent = []; // Para archivos directamente en la carpeta del evento
+            let categoryAlbums = []; // Para subcarpetas (álbumes) dentro del evento
 
-                        if (currentEntry.isDirectory()) {
-                            // Si es un directorio, busca dentro de él
-                            mediaFiles.push(...findMediaFiles(subPath, subRelativePath));
-                        } else {
-                            // Si es un archivo, verifica si es multimedia
-                            const fileExtension = path.extname(currentEntry.name).toLowerCase();
-                            let type = 'unknown';
-                            if (['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.jfif'].includes(fileExtension)) {
-                                type = 'image';
-                            } else if (['.mp4', '.mov', '.avi', '.webm'].includes(fileExtension)) {
-                                type = 'video';
-                            }
+            const currentCategoryEntries = fs.readdirSync(entryPath, { withFileTypes: true });
+            for (const currentCategoryEntry of currentCategoryEntries) {
+                const itemPath = path.join(entryPath, currentCategoryEntry.name);
+                const relativeItemPath = path.relative(galleryDir, itemPath).replace(/\\/g, '/');
 
-                            if (type !== 'unknown') {
-                                mediaFiles.push({
-                                    id: simpleHash(subRelativePath), // ID estable para el archivo multimedia
-                                    type: type,
-                                    src: subRelativePath, // Ruta relativa a 'galeria/'
-                                    name: currentEntry.name.split('.')[0] // Nombre sin extensión
+                if (currentCategoryEntry.isFile()) {
+                    // Si es un archivo, añadirlo al contenido directo de la categoría
+                    const ext = path.extname(currentCategoryEntry.name).toLowerCase();
+                    if (['.jpg', '.jpeg', '.png', '.gif', '.jfif', '.webp'].includes(ext)) {
+                        categoryDirectContent.push({
+                            id: simpleHash(relativeItemPath),
+                            type: 'image',
+                            src: relativeItemPath,
+                            name: path.basename(currentCategoryEntry.name, ext)
+                        });
+                    } else if (['.mp4', '.mov', '.avi', '.webm'].includes(ext)) {
+                        categoryDirectContent.push({
+                            id: simpleHash(relativeItemPath),
+                            type: 'video',
+                            src: relativeItemPath,
+                            name: path.basename(currentCategoryEntry.name, ext)
+                        });
+                    }
+                } else if (currentCategoryEntry.isDirectory()) {
+                    // Si es un subdirectorio, tratarlo como un álbum
+                    const albumName = currentCategoryEntry.name;
+                    const albumContent = [];
+                    const albumEntries = fs.readdirSync(itemPath, { withFileTypes: true });
+
+                    for (const albumEntry of albumEntries) {
+                        if (albumEntry.isFile()) {
+                            const albumFileExt = path.extname(albumEntry.name).toLowerCase();
+                            const albumRelativePath = path.relative(galleryDir, path.join(itemPath, albumEntry.name)).replace(/\\/g, '/');
+                            if (['.jpg', '.jpeg', '.png', '.gif', '.jfif', '.webp'].includes(albumFileExt)) {
+                                albumContent.push({
+                                    id: simpleHash(albumRelativePath),
+                                    type: 'image',
+                                    src: albumRelativePath,
+                                    name: path.basename(albumEntry.name, albumFileExt)
+                                });
+                            } else if (['.mp4', '.mov', '.avi', '.webm'].includes(albumFileExt)) {
+                                albumContent.push({
+                                    id: simpleHash(albumRelativePath),
+                                    type: 'video',
+                                    src: albumRelativePath,
+                                    name: path.basename(albumEntry.name, albumFileExt)
                                 });
                             }
                         }
                     }
-                    return mediaFiles;
+                    albumContent.sort((a, b) => a.src.localeCompare(b.src));
+                    if (albumContent.length > 0) { // Solo añadir álbumes que contengan archivos
+                        categoryAlbums.push({
+                            id: simpleHash(relativeItemPath), // ID estable para el álbum
+                            name: albumName,
+                            path: relativeItemPath,
+                            content: albumContent
+                        });
+                    }
                 }
-                categoryContent = findMediaFiles(entryPath, entry.name);
-                // Ordenar el contenido del evento por nombre de archivo para consistencia
-                categoryContent.sort((a, b) => a.src.localeCompare(b.src));
             }
+            categoryDirectContent.sort((a, b) => a.src.localeCompare(b.src));
+            categoryAlbums.sort((a, b) => a.name.localeCompare(b.name));
 
-            if (categoryContent.length > 0 || isProductCategory) { // Añadir categoría de producto aunque esté vacía si no hay productos
-                events.push({
-                    name: categoryName,
-                    path: categoryName, // La ruta de la categoría (ej. "15años", "tienda-productos")
-                    isProductCategory: isProductCategory,
-                    // Si es categoría de producto, 'products' contendrá los productos
-                    // Si es categoría de galería, 'content' contendrá las fotos/videos
-                    [isProductCategory ? 'products' : 'content']: categoryContent 
-                });
+            const categoryObject = {
+                name: categoryName,
+                path: categoryName,
+                isProductCategory: false,
+            };
+            if (categoryDirectContent.length > 0) {
+                categoryObject.content = categoryDirectContent; // Archivos directos en la categoría
             }
+            if (categoryAlbums.length > 0) {
+                categoryObject.albums = categoryAlbums; // Subcarpetas como álbumes
+            }
+            categories.push(categoryObject);
         }
     }
-    // Ordenar eventos/categorías por nombre
-    events.sort((a, b) => a.name.localeCompare(b.name));
-    return events;
+    // Ordenar categorías principales por nombre
+    categories.sort((a, b) => a.name.localeCompare(b.name));
+    return categories;
 }
 
 try {
     const galleryData = generateGalleryData(galleryDir);
     fs.writeFileSync(dataFilePath, JSON.stringify(galleryData, null, 2), 'utf8');
-    console.log('data.json generado exitosamente con IDs estables y rutas correctas.');
+    console.log('data.json generado exitosamente con IDs estables y rutas correctas, incluyendo subcarpetas de galería como álbumes separados.');
 } catch (error) {
     console.error('Error al generar data.json:', error);
 }
-
