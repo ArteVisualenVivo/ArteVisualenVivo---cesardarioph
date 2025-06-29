@@ -8,10 +8,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Valores por defecto para los precios de fotos (serán sobrescritos por localStorage)
         // AHORA SON PRECIOS POR TRAMOS (ACTUALIZADOS SEGÚN TU INDICACIÓN)
-        PHOTO_PRICE_TIER_1: 3000, // 1 unidad
-        PHOTO_PRICE_TIER_2: 2500,  // 2 a 10 unidades
-        PHOTO_PRICE_TIER_3: 2225,  // 11 a 20 unidades
-        PHOTO_PRICE_TIER_4: 2000,  // 21 o más unidades
+        PHOTO_PRICE_TIER_1: 2500, // 1 unidad
+        PHOTO_PRICE_TIER_2: 2000,  // 2 a 10 unidades
+        PHOTO_PRICE_TIER_3: 1750,  // 11 a 20 unidades
+        PHOTO_PRICE_TIER_4: 1500,  // 21 o más unidades
 
         // Alias de Mercado Pago (lo usaremos también para la transferencia bancaria)
         MERCADO_PAGO_ALIAS: 'cesar.dario.ph'
@@ -31,10 +31,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return (!isNaN(parsedPrice) && parsedPrice >= 0) ? parsedPrice : defaultValue;
         };
 
-        CONFIG.PHOTO_PRICE_TIER_1 = parseAndValidatePrice(savedTier1Price, 3000);
-        CONFIG.PHOTO_PRICE_TIER_2 = parseAndValidatePrice(savedTier2Price, 2500);
-        CONFIG.PHOTO_PRICE_TIER_3 = parseAndValidatePrice(savedTier3Price, 2225);
-        CONFIG.PHOTO_PRICE_TIER_4 = parseAndValidatePrice(savedTier4Price, 2000);
+        CONFIG.PHOTO_PRICE_TIER_1 = parseAndValidatePrice(savedTier1Price, 2500);
+        CONFIG.PHOTO_PRICE_TIER_2 = parseAndValidatePrice(savedTier2Price, 2000);
+        CONFIG.PHOTO_PRICE_TIER_3 = parseAndValidatePrice(savedTier3Price, 1750);
+        CONFIG.PHOTO_PRICE_TIER_4 = parseAndValidatePrice(savedTier4Price, 1500);
 
         console.log("DEBUG: Precios de fotos por tramos cargados del localStorage:", { 
             tier1: CONFIG.PHOTO_PRICE_TIER_1, 
@@ -639,7 +639,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     selectedImage: targetImage // Almacena la referencia a la imagen de variante específica
                 };
                 selectedItems.set(mapKey, itemToStore);
-                showToast(`"${itemData.name} (${targetImage.name || `Modelo ${targetData.id}`})" añadido al carrito.`, 'success');
+                showToast(`"${itemData.name} (${targetImage.name || `Modelo ${targetImage.id}`})" añadido al carrito.`, 'success');
             }
         } else {
             console.error("Tipo de ítem desconocido:", type);
@@ -790,7 +790,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Botón de selección para productos: añadir la VARIANTE ESPECÍFICA que se está viendo
             elements.addToSelectionBtn.style.display = 'inline-block';
             const currentProductImageVariant = currentLightboxItems[currentPhotoIndex];
-            const mapKey = `product_${item.id}_${currentProductImageVariant.id}`;
+            const mapKey = `product_${item.id}_${currentProductImageVariant.id}`; // Clave para la variante específica
             
             if (selectedItems.has(mapKey)) {
                 elements.addToSelectionBtn.textContent = 'Añadido al Carrito (Cant: ' + selectedItems.get(mapKey).quantity + ')';
@@ -1239,7 +1239,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 viewEventBtn.addEventListener('click', () => {
                     console.log(`DEBUG: Clic en botón "Ver Galería" para el evento: ${event.name}`);
                     filterGalleryByCategory(event.name);
-                    if (elements.gallerySection) elements.gallerySection.style.display = 'block'; // Hacer visible la galería
+                    if (elements.gallerySection) elements.gallerySection.style.display = 'block';
                     if (elements.categoryFilter) elements.categoryFilter.value = event.name;
                     if (elements.gallerySection) elements.gallerySection.scrollIntoView({ behavior: 'smooth' });
                 });
@@ -1274,12 +1274,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function filterGalleryByCategory(categoryName) {
         console.log(`DEBUG: filterGalleryByCategory llamado con categoría: ${categoryName}`);
         if (!elements.photoGrid || !elements.currentEventGalleryTitle) return;
-        
-        // Asegurarse de que la sección de la galería esté visible cuando se filtra
-        if (elements.gallerySection) {
-            elements.gallerySection.style.display = 'block';
-        }
-
         if (categoryName === 'all') {
             currentFilteredPhotos = [...allPhotos]; // Mostrar todas las fotos
             elements.currentEventGalleryTitle.textContent = 'Todas las Fotos de Eventos';
@@ -1379,8 +1373,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Initial rendering of main page content
             renderEventPreviews(eventPreviews); 
             populateCategoryFilter();
-            // REMOVED: elements.gallerySection.style.display = 'block'; // Gallery starts hidden
-            // REMOVED: filterGalleryByCategory('all'); // Gallery starts hidden, no initial filter
+            if (elements.gallerySection) elements.gallerySection.style.display = 'block';
+            filterGalleryByCategory('all'); // Show all photos by default at startup
             renderGridForProducts(elements.featuredProductsGrid, allProducts);
             updateSelectionUI(); // Ensure cart updates and buttons reflect status
 
@@ -1671,8 +1665,7 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.servicesSection,
             elements.productsSection,
             elements.contactSection,
-            elements.footer,
-            document.getElementById('about') // Added about section
+            elements.footer
         ];
         const panelsAndModals = [
             elements.mobileMenu,
