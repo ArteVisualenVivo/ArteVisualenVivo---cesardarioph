@@ -367,7 +367,8 @@ section {
 .hero-content {
     max-width: 800px;
     padding: 20px;
-    text-align: center; /* AÑADIDO: Centra el texto y los elementos inline-block */
+    text-align: center; /* Mantiene el centrado del texto */
+    margin: 0 auto; /* AÑADIDO: Centra el bloque hero-content si no lo estaba haciendo el flex del padre */
 }
 
 .hero h1 {
@@ -380,6 +381,10 @@ section {
 .hero p {
     font-size: 1.3rem;
     margin-bottom: 30px;
+}
+
+.hero-buttons {
+    text-align: center; /* AÑADIDO: Asegura que los botones (inline-block) estén centrados */
 }
 
 .hero-buttons .btn {
