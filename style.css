@@ -35,6 +35,12 @@ html {
     overflow-y: auto; 
 }
 
+/* NUEVO: Clase no-scroll para el elemento HTML */
+html.no-scroll {
+    overflow: hidden; /* Oculta el scrollbar del HTML */
+    height: 100%; /* Asegura que el HTML ocupe toda la altura del viewport */
+}
+
 body {
     font-family: var(--body-font);
     color: var(--light-color);
@@ -43,14 +49,16 @@ body {
     min-height: 100vh; /* Se mantiene para asegurar que el body sea al menos tan alto como el viewport */
     display: flex;
     flex-direction: column;
+    /* REMOVIDO: overflow: hidden; height: 100vh; position: fixed; width: 100%; */
+    /* Estas propiedades ahora se gestionan en html.no-scroll o se eliminan del body.no-scroll */
 }
 
-/* Evita el scroll cuando un modal o panel está abierto */
+/* La clase body.no-scroll ahora solo asegura que el body no se desplace si tiene su propio scroll */
+/* En esta configuración, el body.no-scroll ya no es estrictamente necesario, pero lo mantenemos limpio */
 body.no-scroll {
-    overflow: hidden;
-    /* REMOVIDO: height: 100vh; */ /* Esta línea es la que a menudo causa el salto */
-    position: fixed; /* Añadido: Fija el body en su posición actual */
-    width: 100%; /* Añadido: Asegura que el body ocupe todo el ancho */
+    /* Si el body tuviera su propio scroll, esto lo ocultaría, pero el control principal es en html.no-scroll */
+    /* overflow: hidden; */ 
+    /* No necesitamos height: 100vh; ni position: fixed; ni width: 100%; aquí */
 }
 
 .container {
