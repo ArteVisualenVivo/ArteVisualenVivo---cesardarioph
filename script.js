@@ -71,11 +71,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    let allGalleryEvents = {};      // Almacena todos los eventos de galería (categorías de data.json sin isProductCategory)
-    let allPhotos = [];             // Almacena todas las fotos y videos individuales de todos los eventos
+    let allPhotos = [];             // Almacena todas las fotos y videos individuales de todos los eventos (con prefijo 'galeria/')
+    let galleryFilterOptions = [];  // Almacena las rutas únicas de categorías y subcategorías para el filtro
     let eventPreviews = [];         // Almacena eventos para la sección "Eventos Destacados"
     let allProducts = [];           // Almacena todos los productos de la tienda (de data.json, isProductCategory: true)
-    let currentFilteredPhotos = []; // Las fotos/videos actualmente mostrados en la galería (filtrados por evento)
+    let currentFilteredPhotos = []; // Las fotos/videos actualmente mostrados en la galería (filtrados por evento/subcategoría)
     let currentLightboxItems = [];  // Los ítems (fotos o imágenes de productos) actualmente vistos en el lightbox
     let currentPhotoIndex = 0;      // Índice del ítem actual en el lightbox
     let currentLightboxContext = ''; // 'gallery' o 'product'
@@ -1244,7 +1244,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (viewEventBtn) {
                 viewEventBtn.addEventListener('click', () => {
                     console.log(`DEBUG: Clic en botón "Ver Galería" para el evento: ${event.name}`);
-                    filterGalleryByCategory(event.name);
+                    filterGalleryByCategory(event.name); // Usar el nombre de la categoría principal
                     if (elements.gallerySection) elements.gallerySection.style.display = 'block'; // Hacer visible la galería
                     if (elements.categoryFilter) elements.categoryFilter.value = event.name;
                     if (elements.gallerySection) elements.gallerySection.scrollIntoView({ behavior: 'smooth' });
@@ -1256,7 +1256,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * Rellena el menú desplegable de filtro de categorías con nombres de eventos.
+     * Rellena el menú desplegable de filtro de categorías con nombres de eventos y subcategorías.
      */
     function populateCategoryFilter() {
         if (!elements.categoryFilter) return;
@@ -1265,20 +1265,37 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.categoryFilter.innerHTML = ''; // Limpiar opciones existentes
         if (allOption) elements.categoryFilter.appendChild(allOption); // Añadir "Todas" de nuevo
 
-        Object.keys(allGalleryEvents).sort().forEach(eventName => {
+        // Ordenar las opciones de filtro alfabéticamente
+        const sortedFilterOptions = [...galleryFilterOptions].sort((a, b) => {
+            // Manejar el caso de "tienda-productos" para que aparezca al final o no aparezca en el filtro de galería
+            if (a.includes('tienda-productos')) return 1;
+            if (b.includes('tienda-productos')) return -1;
+            return a.localeCompare(b);
+        });
+
+        sortedFilterOptions.forEach(path => {
+            // Excluir la categoría 'tienda-productos' del filtro de galería si aparece
+            if (path.includes('tienda-productos')) {
+                return;
+            }
+
             const option = document.createElement('option');
-            option.value = eventName;
-            option.textContent = eventName;
+            option.value = path;
+            // Formatear el texto para mostrar la jerarquía (ej. "15años / Magdalena")
+            option.textContent = path.split('/').map(segment => {
+                // Capitalizar la primera letra de cada segmento
+                return segment.charAt(0).toUpperCase() + segment.slice(1);
+            }).join(' / ');
             elements.categoryFilter.appendChild(option);
         });
     }
 
     /**
      * Aplica el filtro de categoría a la galería de fotos.
-     * @param {string} categoryName - El nombre de la categoría a filtrar ('all' para todas).
+     * @param {string} selectedPath - La ruta de la categoría o subcategoría a filtrar ('all' para todas).
      */
-    function filterGalleryByCategory(categoryName) {
-        console.log(`DEBUG: filterGalleryByCategory llamado con categoría: ${categoryName}`);
+    function filterGalleryByCategory(selectedPath) {
+        console.log(`DEBUG: filterGalleryByCategory llamado con ruta: ${selectedPath}`);
         if (!elements.photoGrid || !elements.currentEventGalleryTitle) return;
         
         // Asegurarse de que la sección de la galería esté visible cuando se filtra
@@ -1286,15 +1303,19 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.gallerySection.style.display = 'block';
         }
 
-        if (categoryName === 'all') {
+        if (selectedPath === 'all') {
             currentFilteredPhotos = [...allPhotos]; // Mostrar todas las fotos
             elements.currentEventGalleryTitle.textContent = 'Todas las Fotos de Eventos';
         } else {
-            // Asegurar que el contenido ya procesado con el prefijo 'galeria/' sea usado
-            currentFilteredPhotos = allGalleryEvents[categoryName] ? 
-                                    [...allGalleryEvents[categoryName].content] : // Copiar array, los ítems ya tienen src con 'galeria/'
-                                    [];
-            elements.currentEventGalleryTitle.textContent = `Fotos del Evento: ${categoryName}`;
+            // Filtrar allPhotos por la ruta seleccionada
+            currentFilteredPhotos = allPhotos.filter(photo => {
+                // La ruta de la foto debe comenzar con 'galeria/' + selectedPath
+                return photo.src.startsWith(`galeria/${selectedPath}/`) || photo.src === `galeria/${selectedPath}`;
+            });
+            // Formatear el título de la galería
+            elements.currentEventGalleryTitle.textContent = `Fotos de: ${selectedPath.split('/').map(segment => {
+                return segment.charAt(0).toUpperCase() + segment.slice(1);
+            }).join(' / ')}`;
         }
         renderGalleryGrid(elements.photoGrid, currentFilteredPhotos); // Usar renderGalleryGrid para fotos/videos
         updateGridButtonsState(); // Actualizar los estados de los botones después de renderizar
@@ -1314,10 +1335,10 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("DEBUG: data.json loaded successfully.", data);
 
             // Restablecer arrays para evitar duplicados en recargas
-            allGalleryEvents = {};
             allPhotos = [];
             eventPreviews = [];
             allProducts = [];
+            galleryFilterOptions = new Set(); // Usar un Set para asegurar opciones únicas
 
             // Procesar datos cargados para separar eventos y productos
             data.forEach(category => {
@@ -1348,31 +1369,38 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                     console.log("DEBUG: allProducts processed with paths:", allProducts.map(p => p.images[0]?.src || 'N/A')); // Added for debugging
                 } else {
-                    // Process event content to add 'galeria/' prefix
+                    // Process event content to add 'galeria/' prefix and populate filter options
                     const processedEventContent = category.content.map(item => ({
                         ...item,
                         src: `galeria/${item.src}`, // PREPEND 'galeria/' for event content
                         name: item.name || item.src.split(/[\/\\]/).pop().split('.')[0]
                     }));
 
-                    // Store in allGalleryEvents with processed content
-                    const processedCategory = {
-                        ...category,
-                        content: processedEventContent // Use processed content
-                    };
-                    allGalleryEvents[category.name] = processedCategory;
+                    // Add top-level category to filter options
+                    galleryFilterOptions.add(category.name);
 
-                    // Add to allPhotos and eventPreviews directly the processedCategory object
-                    // as its items.src already have the 'galeria/' prefix
+                    // Iterate through processed content to extract subcategory paths
                     processedEventContent.forEach(item => {
                         allPhotos.push({
                             ...item,
-                            eventName: category.name
+                            eventName: category.name // Keep top-level event name for general reference
                         });
+
+                        // Extract directory path from item.src (e.g., '15años/magdalena')
+                        const relativePath = item.src.substring('galeria/'.length); // Remove 'galeria/' prefix
+                        const pathSegments = relativePath.split('/');
+                        if (pathSegments.length > 1) {
+                            // Reconstruct path up to the directory name (excluding filename)
+                            const dirPath = pathSegments.slice(0, -1).join('/');
+                            galleryFilterOptions.add(dirPath); // Add subcategory path
+                        }
                     });
                     
                     // Add to eventPreviews the category object with processed content
-                    eventPreviews.push(processedCategory); 
+                    eventPreviews.push({
+                        ...category,
+                        content: processedEventContent // Use processed content for previews
+                    }); 
                 }
             });
 
@@ -1380,7 +1408,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("DEBUG: allPhotos processed and sorted.", allPhotos);
             console.log("DEBUG: IDs de todas las fotos disponibles (allPhotos):", allPhotos.map(p => p.id)); // NUEVO: IDs de todas las fotos cargadas
             console.log("DEBUG: allProducts processed.", allProducts);
-            console.log("DEBUG: allGalleryEvents processed.", allGalleryEvents);
+            console.log("DEBUG: galleryFilterOptions (Set):", galleryFilterOptions); // Debugging the new filter options
 
             // Initial rendering of main page content
             renderEventPreviews(eventPreviews); 
