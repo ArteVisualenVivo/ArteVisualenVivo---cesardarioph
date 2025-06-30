@@ -1516,7 +1516,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Desplazarse al inicio del contenido del panel de administración cuando se abre manualmente
         // Esto ahora se maneja por handleRouting para el enlace admin_panel
-        if (!window.location.hash.startsWith('#admin_panel?ids=')) { // Solo desplazarse al inicio si no es una apertura automática
+        if (!window.location.hash.startsWith('#admin_panel?ids=')) { // Only scroll to top if not an automatic opening
             const adminPanelContent = elements.adminPanel.querySelector('.admin-panel-content');
             if (adminPanelContent) {
                 adminPanelContent.scrollTop = 0;
@@ -1674,26 +1674,42 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Funciones para gestionar el estado de no-scroll del cuerpo ---
     function setBodyNoScroll() {
         if (activeScrollLocks === 0) { // Solo bloquear si no hay otro bloqueo activo
-            scrollPosition = window.scrollY;
-            document.body.style.overflow = 'hidden';
+            scrollPosition = window.scrollY; // Guarda la posición actual del scroll
+
+            // Aplica overflow: hidden al elemento HTML para ocultar la barra de desplazamiento principal
+            document.documentElement.style.overflow = 'hidden'; 
+            
+            // Fija el body para mantener el contenido visualmente en su lugar
             document.body.style.position = 'fixed';
             document.body.style.top = `-${scrollPosition}px`;
-            document.body.style.width = '100%';
-            document.body.classList.add('no-scroll');
+            document.body.style.width = '100%'; // Asegura que el body ocupe todo el ancho disponible
+
+            // Añade la clase no-scroll al body (si es necesaria para otras reglas CSS como height: 100vh)
+            document.body.classList.add('no-scroll'); 
             console.log("DEBUG: Scroll bloqueado. Posición:", scrollPosition);
         }
         activeScrollLocks++;
+        console.log("DEBUG: activeScrollLocks (incrementado):", activeScrollLocks);
     }
 
     function removeBodyNoScroll() {
         activeScrollLocks--;
+        console.log("DEBUG: activeScrollLocks (decrementado):", activeScrollLocks);
         if (activeScrollLocks <= 0) { // Solo desbloquear si no quedan bloqueos
             activeScrollLocks = 0; // Asegurar que no sea negativo
-            document.body.style.overflow = '';
+
+            // Restaura el overflow del elemento HTML
+            document.documentElement.style.overflow = ''; 
+
+            // Restaura las propiedades del body
             document.body.style.position = '';
             document.body.style.top = '';
             document.body.style.width = '';
+
+            // Elimina la clase no-scroll del body
             document.body.classList.remove('no-scroll');
+            
+            // Restaura la posición del scroll
             window.scrollTo(0, scrollPosition);
             console.log("DEBUG: Scroll desbloqueado. Restaurado a:", scrollPosition);
         }
@@ -1786,6 +1802,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.body.style.position = '';
                     document.body.style.top = '';
                     document.body.style.width = '';
+                    document.documentElement.style.overflow = ''; // Asegurar que el HTML también se desbloquee
                 }
                 console.log("DEBUG: Sección de descarga cerrada, display establecido en none.");
             } else {
@@ -1798,6 +1815,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.body.style.position = ''; 
                 document.body.style.top = ''; 
                 document.body.style.width = ''; 
+                document.documentElement.style.overflow = ''; // Asegurar que el HTML también se desbloquee
                 activeScrollLocks = 0; // Resetear el contador de bloqueos para la sección de descarga
                 console.log("DEBUG: Sección de descarga abierta completamente, display establecido en flex. Se aseguró que body.no-scroll sea eliminado.");
             }
