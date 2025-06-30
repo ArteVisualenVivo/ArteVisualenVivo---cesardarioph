@@ -79,10 +79,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentLightboxItems = [];  // Los ítems (fotos o imágenes de productos) actualmente vistos en el lightbox
     let currentPhotoIndex = 0;      // Índice del ítem actual en el lightbox
     let currentLightboxContext = ''; // 'gallery' o 'product'
-    
-    // NUEVAS VARIABLES PARA EL BLOQUEO DE SCROLL
-    let scrollPosition = 0;
-    let activeScrollLocks = 0; // Contador para saber cuántos elementos quieren bloquear el scroll
 
     // *** NUEVO: Para la Sección de Descarga del Cliente ***
     let clientDownloadPhotos = []; // Almacena fotos para mostrar en la sección de descarga
@@ -93,6 +89,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Para productos, la clave será 'product_PARENT_PRODUCT_ID_IMAGE_ID' para diferenciar variantes.
     // El valor es un objeto { originalProductId: string, type: string, quantity: number, itemData: object, selectedImage?: object }
     let selectedItems = new Map(); // Se inicializa aquí, luego se carga de localStorage
+
+    // Variable para guardar la posición de scroll antes de abrir el lightbox
+    let lastScrollY = 0;
 
     // --- Referencias a Elementos del DOM ---
     const elements = {
@@ -143,8 +142,8 @@ document.addEventListener('DOMContentLoaded', () => {
         clearSelectionBtn: document.getElementById('clear-selection-btn'),
         whatsappBtn: document.getElementById('whatsapp-btn'),
         packSummaryMessage: document.getElementById('pack-summary-message'),
-        // downloadLinkGeneratorBtn: document.getElementById('download-link-generator-btn'), // Ocultado
-        // whatsappDownloadLinkBtn: document.getElementById('whatsapp-download-link-btn'), // Ocultado
+        downloadLinkGeneratorBtn: document.getElementById('download-link-generator-btn'),
+        whatsappDownloadLinkBtn: document.getElementById('whatsapp-download-link-btn'), // Para el enlace de descarga del carrito
 
         // Modal de Pago
         paymentModal: document.getElementById('payment-modal'),
@@ -408,19 +407,24 @@ document.addEventListener('DOMContentLoaded', () => {
      * Renderiza la lista detallada de ítems seleccionados en el panel del carrito.
      */
     function renderSelectedItemsInCart() {
-        // Se eliminan las referencias a elements.downloadLinkGeneratorBtn y elements.whatsappDownloadLinkBtn
-        // ya que estos botones están ocultos y su estado no necesita ser gestionado aquí.
-        if (!elements.selectedItemsList || !elements.packSummaryMessage) return;
+        if (!elements.selectedItemsList || !elements.packSummaryMessage || !elements.downloadLinkGeneratorBtn || !elements.whatsappDownloadLinkBtn) return;
 
         elements.selectedItemsList.innerHTML = ''; // Limpiar lista existente
 
         if (selectedItems.size === 0) {
             elements.selectedItemsList.innerHTML = '<li class="empty-selection"><i class="fas fa-shopping-cart"></i><p>Tu selección está vacía.<br>¡Añade fotos o productos!</p></li>';
+            // El botón de WhatsApp flotante ya no se gestiona aquí, sino en setMainPageDisplay
             elements.packSummaryMessage.style.display = 'none'; // Ocultar mensaje del paquete
+            // Deshabilitar los botones de generación de enlaces de descarga si no hay fotos seleccionadas
+            elements.downloadLinkGeneratorBtn.disabled = true; 
+            elements.whatsappDownloadLinkBtn.disabled = true;
             return;
         } else {
-            // No se gestiona la habilitación/deshabilitación de los botones de descarga aquí,
-            // ya que se han ocultado permanentemente.
+            // El botón de WhatsApp flotante ya no se gestiona aquí, sino en setMainPageDisplay
+            // Verificar si hay fotos en el carrito para habilitar los botones de enlace de descarga
+            const hasPhotosInCart = Array.from(selectedItems.values()).some(item => item.type === 'photo' && item.quantity > 0);
+            elements.downloadLinkGeneratorBtn.disabled = !hasPhotosInCart;
+            elements.whatsappDownloadLinkBtn.disabled = !hasPhotosInCart;
         }
 
         const selectedPhotosArray = [];
@@ -614,7 +618,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     itemData: itemData // Guarda los datos completos de la foto
                 };
                 selectedItems.set(mapKey, itemToStore);
-                showToast(`"${itemData.name || `Foto ${item.id}`}" añadida.`, 'success');
+                showToast(`"${itemData.name || `Foto ${itemData.id}`}" añadida.`, 'success');
             }
         } else if (type === 'product') {
             // Si no se especifica una imagen, usar la primera por defecto (para clic en la tarjeta principal)
@@ -720,7 +724,7 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function clearSelection() {
         selectedItems.clear(); // Vacía todo el Mapa
-        localStorage.removeItem('selectedItems'); // Eliminar del localStorage
+        saveSelectionToLocalStorage(); // Guardar la selección después de vaciar
         updateSelectionUI(); // Esto actualizará los estados de los botones
         showToast('Tu selección ha sido vaciada.', 'info');
         // Ya no se cierra explícitamente paymentModal aquí. Debe ser cerrado por acción del usuario.
@@ -734,13 +738,13 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function openLightbox(item, currentIndex, context = 'gallery') {
         console.log("DEBUG: openLightbox llamado con item:", item, "index:", currentIndex, "context:", context);
-        console.log("DEBUG: Estado de gallerySection display antes de abrir lightbox:", elements.gallerySection.style.display); // Added log
         if (!elements.lightboxImage || !elements.lightboxVideo || !elements.lightboxCaption || !elements.addToSelectionBtn || !elements.lightbox) {
             console.error("ERROR: Uno o más elementos del lightbox no encontrados.");
             return;
         }
 
-        setBodyNoScroll(); // Bloquear el scroll del body
+        // Guarda la posición de scroll actual antes de abrir el lightbox
+        lastScrollY = window.scrollY;
 
         elements.lightboxImage.style.display = 'none';
         elements.lightboxVideo.style.display = 'none';
@@ -815,21 +819,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         elements.lightbox.classList.add('open');
+        setBodyNoScroll();
     }
 
     /**
      * Cierra el lightbox.
      */
     function closeLightbox() {
+        console.log("DEBUG: closeLightbox llamado.");
         if (!elements.lightbox || !elements.lightboxVideo) return;
-        console.log("DEBUG: Iniciando closeLightbox.");
         elements.lightbox.classList.remove('open');
         elements.lightboxVideo.pause();
         elements.lightboxVideo.removeAttribute('src'); // Limpia la fuente del video
-        
-        removeBodyNoScroll(); // Desbloquear el scroll del body
+        removeBodyNoScroll();
         updateGridButtonsState(); // Actualiza los estados de los botones cuando se cierra el lightbox
-        console.log("DEBUG: Lightbox cerrado. Estado de gallerySection display:", elements.gallerySection.style.display);
+
+        // Restaura la posición de scroll después de cerrar el lightbox
+        if (lastScrollY !== 0) {
+            window.scrollTo(0, lastScrollY);
+            console.log(`DEBUG: Scroll restaurado a Y: ${lastScrollY}`);
+            lastScrollY = 0; // Reinicia la variable después de usarla
+        }
     }
 
     /**
@@ -1010,8 +1020,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // --- FIN DEL CAMBIO ---
 
-        // AÑADIR LA INSTRUCCIÓN PARA ADJUNTAR EL COMPROBANTE
-        message += `\n\n*IMPORTANTE:* Por favor, adjunta el comprobante de pago en este chat para que podamos procesar tu pedido. ¡Gracias!`;
+        message += `\n\nEspero tus instrucciones para recibir los archivos/productos. ¡Gracias!`;
 
         return `https://wa.me/${CONFIG.WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
     }
@@ -1300,13 +1309,12 @@ document.addEventListener('DOMContentLoaded', () => {
      * @param {string} selectedPath - La ruta de la categoría o subcategoría a filtrar ('all' para todas).
      */
     function filterGalleryByCategory(selectedPath) {
-        console.log(`DEBUG: filterGalleryByCategory llamado con ruta: ${selectedPath}`); // Added log
+        console.log(`DEBUG: filterGalleryByCategory llamado con ruta: ${selectedPath}`);
         if (!elements.photoGrid || !elements.currentEventGalleryTitle) return;
         
         // Asegurarse de que la sección de la galería esté visible cuando se filtra
         if (elements.gallerySection) {
             elements.gallerySection.style.display = 'block';
-            console.log("DEBUG: gallerySection display establecido a 'block'."); // Added log
         }
 
         if (selectedPath === 'all') {
@@ -1500,7 +1508,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         elements.adminPanel.classList.add('open'); // Añadir clase 'open' para hacerlo visible vía CSS
         elements.adminPanel.style.display = 'flex'; // Usar flex para que el contenido respete la dirección flex en CSS
-        setBodyNoScroll(); // Bloquear el scroll del body
+        setBodyNoScroll();
 
         // Rellenar y limpiar entradas para precios de fotos
         if (elements.photoPriceTier1Input) elements.photoPriceTier1Input.value = CONFIG.PHOTO_PRICE_TIER_1;
@@ -1518,7 +1526,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Desplazarse al inicio del contenido del panel de administración cuando se abre manualmente
         // Esto ahora se maneja por handleRouting para el enlace admin_panel
-        if (!window.location.hash.startsWith('#admin_panel?ids=')) { // Only scroll to top if not an automatic opening
+        if (!window.location.hash.startsWith('#admin_panel?ids=')) { // Solo desplazarse al inicio si no es una apertura automática
             const adminPanelContent = elements.adminPanel.querySelector('.admin-panel-content');
             if (adminPanelContent) {
                 adminPanelContent.scrollTop = 0;
@@ -1534,7 +1542,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.adminPanel) {
             elements.adminPanel.classList.remove('open');
             elements.adminPanel.style.display = 'none'; // Ocultar explícitamente el panel
-            removeBodyNoScroll(); // Desbloquear el scroll del body
+            removeBodyNoScroll();
             console.log("DEBUG: Panel de administración cerrado y display establecido en none.");
         }
     }
@@ -1674,71 +1682,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Funciones para gestionar el estado de no-scroll del cuerpo ---
-    let lastActiveElement = null; // Variable para almacenar el elemento que tenía el foco
-
     function setBodyNoScroll() {
-        if (activeScrollLocks === 0) { // Solo bloquear si no hay otro bloqueo activo
-            scrollPosition = window.scrollY; // Guarda la posición actual del scroll
-            lastActiveElement = document.activeElement; // Guarda el elemento que tenía el foco
-            console.log("DEBUG: Elemento activo antes de bloquear scroll:", lastActiveElement);
-
-            // Aplica overflow: hidden al elemento HTML para ocultar la barra de desplazamiento principal
-            document.documentElement.style.overflow = 'hidden'; 
-            
-            // Fija el body para mantener el contenido visualmente en su lugar
-            document.body.style.position = 'fixed';
-            document.body.style.top = `-${scrollPosition}px`;
-            document.body.style.width = '100%'; // Asegura que el body ocupe todo el ancho disponible
-
-            // Añade la clase no-scroll al body (si es necesaria para otras reglas CSS como height: 100vh)
-            document.body.classList.add('no-scroll'); 
-            console.log("DEBUG: Scroll bloqueado. Posición:", scrollPosition);
-        }
-        activeScrollLocks++;
-        console.log("DEBUG: activeScrollLocks (incrementado):", activeScrollLocks);
+        document.body.classList.add('no-scroll');
+        console.log("DEBUG: body.no-scroll añadido.");
     }
 
     function removeBodyNoScroll() {
-        activeScrollLocks--;
-        console.log("DEBUG: activeScrollLocks (decrementado):", activeScrollLocks);
-        if (activeScrollLocks <= 0) { // Solo desbloquear si no quedan bloqueos
-            activeScrollLocks = 0; // Asegurar que no sea negativo
-
-            // Restaura el overflow del elemento HTML
-            document.documentElement.style.overflow = ''; 
-
-            // Restaura las propiedades del body
-            document.body.style.position = '';
-            document.body.style.top = '';
-            document.body.style.width = '';
-
-            // Elimina la clase no-scroll del body
+        // Solo quitamos 'no-scroll' si NINGÚN modal/panel que deba bloquear el scroll está abierto.
+        // La sección de descarga ahora tiene su propio scroll, así que no debe bloquear el body.
+        if (!(elements.selectionPanel && elements.selectionPanel.classList.contains('open')) &&
+            !(elements.paymentModal && elements.paymentModal.classList.contains('open')) &&
+            !(elements.adminPanel && elements.adminPanel.classList.contains('open')) &&
+            !(elements.lightbox && elements.lightbox.classList.contains('open'))
+        ) {
             document.body.classList.remove('no-scroll');
-            
-            console.log("DEBUG: Scroll antes de restaurar:", window.scrollY);
-            window.scrollTo(0, scrollPosition);
-            console.log("DEBUG: Scroll después de restaurar:", window.scrollY);
-            console.log("DEBUG: Scroll desbloqueado. Restaurado a:", scrollPosition);
-
-            // Intentar restaurar el foco al elemento que lo tenía antes
-            if (lastActiveElement && typeof lastActiveElement.focus === 'function') {
-                // Pequeño retraso para dar tiempo al navegador a recalcular el layout
-                setTimeout(() => {
-                    // Verificar si el elemento sigue siendo parte del DOM antes de intentar enfocarlo
-                    if (document.body.contains(lastActiveElement)) {
-                        lastActiveElement.focus();
-                        console.log("DEBUG: Foco restaurado a:", lastActiveElement);
-                    } else {
-                        console.log("DEBUG: Elemento anterior no está en el DOM, poniendo foco en el body.");
-                        document.body.focus();
-                    }
-                }, 50); // Un pequeño retraso puede ayudar
-            } else {
-                // Si no hay un elemento previo o no es focuseable, intentar poner el foco en el body
-                document.body.focus();
-                console.log("DEBUG: Foco puesto en el body.");
-            }
-            lastActiveElement = null; // Limpiar la referencia
+            console.log("DEBUG: body.no-scroll eliminado.");
+        } else {
+            console.log("DEBUG: body.no-scroll no eliminado (otro panel/modal está abierto).");
         }
     }
 
@@ -1822,28 +1782,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.downloadSection.classList.remove('open-full');
                 elements.downloadSection.style.display = 'none';
                 // Cuando volvemos a la vista principal, aseguramos que el body.no-scroll se maneje correctamente
-                // Nota: removeBodyNoScroll() ya se encarga de esto si se llama desde un modal
-                // Pero si se llama desde aquí sin un modal abierto, hay que forzarlo
-                if (activeScrollLocks === 0) { // Solo si no hay otros bloqueos activos
-                    document.body.classList.remove('no-scroll');
-                    document.body.style.position = '';
-                    document.body.style.top = '';
-                    document.body.style.width = '';
-                    document.documentElement.style.overflow = ''; // Asegurar que el HTML también se desbloquee
-                }
+                removeBodyNoScroll(); 
                 console.log("DEBUG: Sección de descarga cerrada, display establecido en none.");
             } else {
                 elements.downloadSection.classList.add('open-full');
                 elements.downloadSection.style.display = 'flex'; // Necesita ser flex para organizar el contenido
                 // Cuando abrimos la sección de descarga, aseguramos que el body NO tenga no-scroll,
                 // ya que la sección de descarga ahora tiene su propio scroll.
-                // Forzar la eliminación de cualquier bloqueo de scroll del body
-                document.body.classList.remove('no-scroll'); 
-                document.body.style.position = ''; 
-                document.body.style.top = ''; 
-                document.body.style.width = ''; 
-                document.documentElement.style.overflow = ''; // Asegurar que el HTML también se desbloquee
-                activeScrollLocks = 0; // Resetear el contador de bloqueos para la sección de descarga
+                document.body.classList.remove('no-scroll'); // Forzar la eliminación
                 console.log("DEBUG: Sección de descarga abierta completamente, display establecido en flex. Se aseguró que body.no-scroll sea eliminado.");
             }
         }
@@ -1896,6 +1842,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Asegurar que otros paneles estén cerrados antes de intentar abrir el específico
             elements.selectionPanel.classList.remove('open');
             elements.paymentModal.classList.remove('open');
+            // elements.lightbox.classList.remove('open'); // Lightbox ahora se gestiona independientemente
             elements.adminPanel.style.display = 'none'; // Asegurar que esté oculto antes de que openAdminPanel intente mostrarlo
 
             // Abrir el panel de administración
@@ -2045,7 +1992,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Cerrar el panel de selección después de generar el enlace
         if (elements.selectionPanel) elements.selectionPanel.classList.remove('open');
         elements.selectionPanel.style.display = 'none'; // Ocultar explícitamente
-        removeBodyNoScroll(); // Desbloquear el scroll del body
+        removeBodyNoScroll();
     }
 
     /**
@@ -2245,16 +2192,16 @@ document.addEventListener('DOMContentLoaded', () => {
         // Navegación Móvil
         if (elements.menuToggle) elements.menuToggle.addEventListener('click', () => {
             if (elements.mobileMenu) elements.mobileMenu.classList.add('open');
-            setBodyNoScroll(); // Bloquear el scroll
+            setBodyNoScroll();
         });
         if (elements.closeMenuBtn) elements.closeMenuBtn.addEventListener('click', () => {
             if (elements.mobileMenu) elements.mobileMenu.classList.remove('open');
-            removeBodyNoScroll(); // Desbloquear el scroll
+            removeBodyNoScroll();
         });
         elements.mobileNavLinks.forEach(link => {
             link.addEventListener('click', () => {
                 if (elements.mobileMenu) elements.mobileMenu.classList.remove('open');
-                removeBodyNoScroll(); // Desbloquear el scroll
+                removeBodyNoScroll();
             });
         });
 
@@ -2270,36 +2217,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Lightbox
-        if (elements.lightboxClose) elements.lightboxClose.addEventListener('click', (e) => {
-            e.preventDefault(); // Evitar cualquier comportamiento por defecto
-            closeLightbox();
-        });
+        if (elements.lightboxClose) elements.lightboxClose.addEventListener('click', closeLightbox);
         if (elements.lightboxPrev) elements.lightboxPrev.addEventListener('click', () => navigateLightbox(-1));
         if (elements.lightboxNext) elements.lightboxNext.addEventListener('click', () => navigateLightbox(1));
-
-        // Cerrar Lightbox al hacer clic fuera del contenido (en el overlay)
-        if (elements.lightbox) {
-            elements.lightbox.addEventListener('click', (event) => {
-                // Si el clic fue directamente en el contenedor del lightbox (el overlay), y no en su contenido
-                if (event.target === elements.lightbox) {
-                    console.log("DEBUG: Clic en el overlay del lightbox, cerrando.");
-                    closeLightbox();
-                }
-            });
-        }
-
 
         // Panel de Selección (Carrito)
         if (elements.selectionIcon) elements.selectionIcon.addEventListener('click', () => {
             if (elements.selectionPanel) elements.selectionPanel.classList.add('open');
             elements.selectionPanel.style.display = 'flex'; // Asegurar que se convierta en flex al abrir
-            setBodyNoScroll(); // Bloquear el scroll
+            setBodyNoScroll();
             updateSelectionUI();
         });
         if (elements.closeSelectionPanelBtn) elements.closeSelectionPanelBtn.addEventListener('click', () => {
             if (elements.selectionPanel) elements.selectionPanel.classList.remove('open');
             elements.selectionPanel.style.display = 'none'; // Ocultar explícitamente
-            removeBodyNoScroll(); // Desbloquear el scroll
+            removeBodyNoScroll();
         });
         if (elements.clearSelectionBtn) elements.clearSelectionBtn.addEventListener('click', clearSelection);
 
@@ -2312,7 +2244,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (elements.paymentModal) elements.paymentModal.classList.add('open');
             elements.paymentModal.style.display = 'flex'; // Asegurar que se convierta en flex al abrir
-            setBodyNoScroll(); // Bloquear el scroll
+            setBodyNoScroll();
             togglePaymentDetails(true);
             if (elements.paymentMethodToggle) elements.paymentMethodToggle.checked = false;
         });
@@ -2333,7 +2265,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.closePaymentModalBtn) elements.closePaymentModalBtn.addEventListener('click', () => {
             if (elements.paymentModal) elements.paymentModal.classList.remove('open');
             elements.paymentModal.style.display = 'none'; // Ocultar explícitamente
-            removeBodyNoScroll(); // Desbloquear el scroll
+            removeBodyNoScroll();
         });
         if (elements.paymentMethodToggle) elements.paymentMethodToggle.addEventListener('change', (event) => {
             togglePaymentDetails(!event.target.checked);
@@ -2390,12 +2322,12 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (elements.paymentModal && elements.paymentModal.classList.contains('open') && e.key === 'Escape') {
                 if (elements.paymentModal) elements.paymentModal.classList.remove('open');
                 elements.paymentModal.style.display = 'none'; // Ocultar explícitamente
-                removeBodyNoScroll(); // Desbloquear el scroll
+                removeBodyNoScroll();
                 e.preventDefault();
             } else if (elements.selectionPanel && elements.selectionPanel.classList.contains('open') && e.key === 'Escape') {
                 if (elements.selectionPanel) elements.selectionPanel.classList.remove('open');
                 elements.selectionPanel.style.display = 'none'; // Ocultar explícitamente
-                removeBodyNoScroll(); // Desbloquear el scroll
+                removeBodyNoScroll();
                 e.preventDefault();
             } else if (elements.adminPanel && elements.adminPanel.classList.contains('open') && e.key === 'Escape') {
                 closeAdminPanel();
@@ -2414,7 +2346,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log("DEBUG: Clic fuera del panel de selección, cerrando.");
                     if (elements.selectionPanel) elements.selectionPanel.classList.remove('open');
                     elements.selectionPanel.style.display = 'none'; // Ocultar explícitamente
-                    removeBodyNoScroll(); // Desbloquear el scroll
+                    removeBodyNoScroll();
                 }
             }
             // Cerrar Modal de Pago
@@ -2427,7 +2359,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log("DEBUG: Clic fuera del modal de pago, cerrando.");
                     if (elements.paymentModal) elements.paymentModal.classList.remove('open');
                     elements.paymentModal.style.display = 'none'; // Ocultar explícitamente
-                    removeBodyNoScroll(); // Desbloquear el scroll
+                    removeBodyNoScroll();
                 }
             }
 
@@ -2460,7 +2392,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log("DEBUG: Clic derecho en el panel de selección abierto, cerrando.");
                 if (elements.selectionPanel) elements.selectionPanel.classList.remove('open');
                 elements.selectionPanel.style.display = 'none'; // Ocultar explícitamente
-                removeBodyNoScroll(); // Desbloquear el scroll
+                removeBodyNoScroll();
             }
             if (elements.adminPanel && elements.adminPanel.classList.contains('open')) {
                 event.preventDefault(); // Prevenir el menú contextual predeterminado del navegador
