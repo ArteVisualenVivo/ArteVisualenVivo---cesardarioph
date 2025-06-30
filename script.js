@@ -1079,6 +1079,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log(`DEBUG: Renderizando imagen de galería: ${item.src}`);
             }
 
+            // MODIFICACIÓN CLAVE: Añadir un listener directo al mediaElement para prevenir el comportamiento por defecto
+            mediaElement.addEventListener('click', (e) => {
+                e.preventDefault(); // Previene cualquier acción por defecto del navegador en la imagen/video
+                e.stopPropagation(); // Detiene la propagación del evento para que no active otros listeners superiores
+                console.log("DEBUG: Clic directo en mediaElement, preventDefault y stopPropagation aplicados.");
+            });
+
+
             const overlay = document.createElement('div');
             overlay.className = 'photo-card-overlay';
             overlay.innerHTML = `<span class="photo-title">${item.name || `Foto ${item.id}`}</span>`;
