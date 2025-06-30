@@ -716,7 +716,7 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function clearSelection() {
         selectedItems.clear(); // Vacía todo el Mapa
-        saveSelectionToLocalStorage(); // Guardar la selección después de vaciar
+        localStorage.removeItem('selectedItems'); // Eliminar del localStorage
         updateSelectionUI(); // Esto actualizará los estados de los botones
         showToast('Tu selección ha sido vaciada.', 'info');
         // Ya no se cierra explícitamente paymentModal aquí. Debe ser cerrado por acción del usuario.
@@ -730,6 +730,7 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function openLightbox(item, currentIndex, context = 'gallery') {
         console.log("DEBUG: openLightbox llamado con item:", item, "index:", currentIndex, "context:", context);
+        console.log("DEBUG: Estado de gallerySection display antes de abrir lightbox:", elements.gallerySection.style.display); // Added log
         if (!elements.lightboxImage || !elements.lightboxVideo || !elements.lightboxCaption || !elements.addToSelectionBtn || !elements.lightbox) {
             console.error("ERROR: Uno o más elementos del lightbox no encontrados.");
             return;
@@ -821,6 +822,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.lightboxVideo.removeAttribute('src'); // Limpia la fuente del video
         removeBodyNoScroll();
         updateGridButtonsState(); // Actualiza los estados de los botones cuando se cierra el lightbox
+        console.log("DEBUG: Lightbox cerrado. Estado de gallerySection display:", elements.gallerySection.style.display); // Added log
     }
 
     /**
@@ -1291,12 +1293,13 @@ document.addEventListener('DOMContentLoaded', () => {
      * @param {string} selectedPath - La ruta de la categoría o subcategoría a filtrar ('all' para todas).
      */
     function filterGalleryByCategory(selectedPath) {
-        console.log(`DEBUG: filterGalleryByCategory llamado con ruta: ${selectedPath}`);
+        console.log(`DEBUG: filterGalleryByCategory llamado con ruta: ${selectedPath}`); // Added log
         if (!elements.photoGrid || !elements.currentEventGalleryTitle) return;
         
         // Asegurarse de que la sección de la galería esté visible cuando se filtra
         if (elements.gallerySection) {
             elements.gallerySection.style.display = 'block';
+            console.log("DEBUG: gallerySection display establecido a 'block'."); // Added log
         }
 
         if (selectedPath === 'all') {
@@ -2199,9 +2202,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Lightbox
-        if (elements.lightboxClose) elements.lightboxClose.addEventListener('click', closeLightbox);
+        // MODIFICADO: Añadido e.preventDefault() al click del botón de cierre.
+        if (elements.lightboxClose) elements.lightboxClose.addEventListener('click', (e) => {
+            e.preventDefault(); // Evitar cualquier comportamiento por defecto
+            closeLightbox();
+        });
         if (elements.lightboxPrev) elements.lightboxPrev.addEventListener('click', () => navigateLightbox(-1));
         if (elements.lightboxNext) elements.lightboxNext.addEventListener('click', () => navigateLightbox(1));
+
+        // NUEVO: Cerrar Lightbox al hacer clic fuera del contenido (en el overlay)
+        if (elements.lightbox) {
+            elements.lightbox.addEventListener('click', (event) => {
+                // Si el clic fue directamente en el contenedor del lightbox (el overlay), y no en su contenido
+                if (event.target === elements.lightbox) {
+                    console.log("DEBUG: Clic en el overlay del lightbox, cerrando.");
+                    closeLightbox();
+                }
+            });
+        }
+
 
         // Panel de Selección (Carrito)
         if (elements.selectionIcon) elements.selectionIcon.addEventListener('click', () => {
