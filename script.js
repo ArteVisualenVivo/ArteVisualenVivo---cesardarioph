@@ -79,6 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentLightboxItems = [];  // Los ítems (fotos o imágenes de productos) actualmente vistos en el lightbox
     let currentPhotoIndex = 0;      // Índice del ítem actual en el lightbox
     let currentLightboxContext = ''; // 'gallery' o 'product'
+    let lastScrollY = 0; // NUEVO: Para guardar la posición del scroll antes de abrir el lightbox
 
     // *** NUEVO: Para la Sección de Descarga del Cliente ***
     let clientDownloadPhotos = []; // Almacena fotos para mostrar en la sección de descarga
@@ -736,6 +737,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // NUEVO: Guardar la posición actual del scroll antes de abrir el lightbox
+        lastScrollY = window.scrollY;
+        console.log("DEBUG: lastScrollY guardado:", lastScrollY);
+
         elements.lightboxImage.style.display = 'none';
         elements.lightboxVideo.style.display = 'none';
 
@@ -823,6 +828,10 @@ document.addEventListener('DOMContentLoaded', () => {
         removeBodyNoScroll();
         updateGridButtonsState(); // Actualiza los estados de los botones cuando se cierra el lightbox
         console.log("DEBUG: Lightbox cerrado. Estado de gallerySection display:", elements.gallerySection.style.display); // Added log
+
+        // NUEVO: Restaurar la posición del scroll
+        window.scrollTo(0, lastScrollY);
+        console.log("DEBUG: Scroll restaurado a:", lastScrollY);
     }
 
     /**
