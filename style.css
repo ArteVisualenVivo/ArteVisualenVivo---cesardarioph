@@ -367,6 +367,7 @@ section {
 .hero-content {
     max-width: 800px;
     padding: 20px;
+    text-align: center; /* AÑADIDO: Centra el texto y los elementos inline-block */
 }
 
 .hero h1 {
