@@ -822,12 +822,14 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function closeLightbox() {
         if (!elements.lightbox || !elements.lightboxVideo) return;
+        console.log("DEBUG: Iniciando closeLightbox.");
         elements.lightbox.classList.remove('open');
         elements.lightboxVideo.pause();
         elements.lightboxVideo.removeAttribute('src'); // Limpia la fuente del video
+        
         removeBodyNoScroll(); // Desbloquear el scroll del body
         updateGridButtonsState(); // Actualiza los estados de los botones cuando se cierra el lightbox
-        console.log("DEBUG: Lightbox cerrado. Estado de gallerySection display:", elements.gallerySection.style.display); // Added log
+        console.log("DEBUG: Lightbox cerrado. Estado de gallerySection display:", elements.gallerySection.style.display);
     }
 
     /**
@@ -1672,9 +1674,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Funciones para gestionar el estado de no-scroll del cuerpo ---
+    let lastActiveElement = null; // Variable para almacenar el elemento que tenía el foco
+
     function setBodyNoScroll() {
         if (activeScrollLocks === 0) { // Solo bloquear si no hay otro bloqueo activo
             scrollPosition = window.scrollY; // Guarda la posición actual del scroll
+            lastActiveElement = document.activeElement; // Guarda el elemento que tenía el foco
+            console.log("DEBUG: Elemento activo antes de bloquear scroll:", lastActiveElement);
 
             // Aplica overflow: hidden al elemento HTML para ocultar la barra de desplazamiento principal
             document.documentElement.style.overflow = 'hidden'; 
@@ -1709,9 +1715,30 @@ document.addEventListener('DOMContentLoaded', () => {
             // Elimina la clase no-scroll del body
             document.body.classList.remove('no-scroll');
             
-            // Restaura la posición del scroll
+            console.log("DEBUG: Scroll antes de restaurar:", window.scrollY);
             window.scrollTo(0, scrollPosition);
+            console.log("DEBUG: Scroll después de restaurar:", window.scrollY);
             console.log("DEBUG: Scroll desbloqueado. Restaurado a:", scrollPosition);
+
+            // Intentar restaurar el foco al elemento que lo tenía antes
+            if (lastActiveElement && typeof lastActiveElement.focus === 'function') {
+                // Pequeño retraso para dar tiempo al navegador a recalcular el layout
+                setTimeout(() => {
+                    // Verificar si el elemento sigue siendo parte del DOM antes de intentar enfocarlo
+                    if (document.body.contains(lastActiveElement)) {
+                        lastActiveElement.focus();
+                        console.log("DEBUG: Foco restaurado a:", lastActiveElement);
+                    } else {
+                        console.log("DEBUG: Elemento anterior no está en el DOM, poniendo foco en el body.");
+                        document.body.focus();
+                    }
+                }, 50); // Un pequeño retraso puede ayudar
+            } else {
+                // Si no hay un elemento previo o no es focuseable, intentar poner el foco en el body
+                document.body.focus();
+                console.log("DEBUG: Foco puesto en el body.");
+            }
+            lastActiveElement = null; // Limpiar la referencia
         }
     }
 
