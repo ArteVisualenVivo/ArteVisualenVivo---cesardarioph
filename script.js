@@ -1098,6 +1098,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Listener para toda la tarjeta (excluyendo el botón de seleccionar) para abrir el lightbox
             card.addEventListener('click', (e) => {
+                e.preventDefault(); // <--- MODIFICACIÓN: Previene cualquier comportamiento de navegación predeterminado
                 console.log(`DEBUG: Clic en photo-card. Target:`, e.target, `Es select button?`, e.target.closest('.select-button'));
                 // Si el clic NO fue en el botón de seleccionar, abrir el lightbox
                 if (e.target && !e.target.closest('.select-button')) {
