@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentLightboxItems = [];  // Los ítems (fotos o imágenes de productos) actualmente vistos en el lightbox
     let currentPhotoIndex = 0;      // Índice del ítem actual en el lightbox
     let currentLightboxContext = ''; // 'gallery' o 'product'
-    let lastScrollY = 0; // NUEVO: Para guardar la posición del scroll antes de abrir el lightbox
+    let lastScrollY = 0; // Para guardar la posición del scroll antes de abrir el lightbox
 
     // *** NUEVO: Para la Sección de Descarga del Cliente ***
     let clientDownloadPhotos = []; // Almacena fotos para mostrar en la sección de descarga
@@ -737,9 +737,15 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // NUEVO: Guardar la posición actual del scroll antes de abrir el lightbox
+        // MODIFICADO: Guardar la posición actual del scroll y aplicar position: fixed
         lastScrollY = window.scrollY;
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${lastScrollY}px`;
+        document.body.style.width = '100%';
+        document.body.classList.add('no-scroll'); // Asegurar que la clase 'no-scroll' también se aplique
         console.log("DEBUG: lastScrollY guardado:", lastScrollY);
+        console.log("DEBUG: Body position:fixed aplicado.");
+
 
         elements.lightboxImage.style.display = 'none';
         elements.lightboxVideo.style.display = 'none';
@@ -814,7 +820,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         elements.lightbox.classList.add('open');
-        setBodyNoScroll();
+        // setBodyNoScroll(); // Ya se maneja dentro de esta función
     }
 
     /**
@@ -825,13 +831,17 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.lightbox.classList.remove('open');
         elements.lightboxVideo.pause();
         elements.lightboxVideo.removeAttribute('src'); // Limpia la fuente del video
-        removeBodyNoScroll();
-        updateGridButtonsState(); // Actualiza los estados de los botones cuando se cierra el lightbox
-        console.log("DEBUG: Lightbox cerrado. Estado de gallerySection display:", elements.gallerySection.style.display); // Added log
-
-        // NUEVO: Restaurar la posición del scroll
+        // MODIFICADO: Restaurar la posición del scroll y eliminar position: fixed
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.classList.remove('no-scroll'); // Asegurar que la clase 'no-scroll' también se elimine
         window.scrollTo(0, lastScrollY);
         console.log("DEBUG: Scroll restaurado a:", lastScrollY);
+        console.log("DEBUG: Body position:fixed eliminado.");
+
+        updateGridButtonsState(); // Actualiza los estados de los botones cuando se cierra el lightbox
+        console.log("DEBUG: Lightbox cerrado. Estado de gallerySection display:", elements.gallerySection.style.display); // Added log
     }
 
     /**
@@ -1677,23 +1687,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Funciones para gestionar el estado de no-scroll del cuerpo ---
     function setBodyNoScroll() {
-        document.body.classList.add('no-scroll');
-        console.log("DEBUG: body.no-scroll añadido.");
+        // Se maneja directamente en openLightbox para capturar el scroll exacto
     }
 
     function removeBodyNoScroll() {
-        // Solo quitamos 'no-scroll' si NINGÚN modal/panel que deba bloquear el scroll está abierto.
-        // La sección de descarga ahora tiene su propio scroll, así que no debe bloquear el body.
-        if (!(elements.selectionPanel && elements.selectionPanel.classList.contains('open')) &&
-            !(elements.paymentModal && elements.paymentModal.classList.contains('open')) &&
-            !(elements.adminPanel && elements.adminPanel.classList.contains('open')) &&
-            !(elements.lightbox && elements.lightbox.classList.contains('open'))
-        ) {
-            document.body.classList.remove('no-scroll');
-            console.log("DEBUG: body.no-scroll eliminado.");
-        } else {
-            console.log("DEBUG: body.no-scroll no eliminado (otro panel/modal está abierto).");
-        }
+        // Se maneja directamente en closeLightbox para restaurar el scroll exacto
     }
 
 
@@ -1776,7 +1774,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.downloadSection.classList.remove('open-full');
                 elements.downloadSection.style.display = 'none';
                 // Cuando volvemos a la vista principal, aseguramos que el body.no-scroll se maneje correctamente
-                removeBodyNoScroll(); 
+                document.body.classList.remove('no-scroll');
+                document.body.style.position = '';
+                document.body.style.top = '';
+                document.body.style.width = '';
                 console.log("DEBUG: Sección de descarga cerrada, display establecido en none.");
             } else {
                 elements.downloadSection.classList.add('open-full');
@@ -1784,6 +1785,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Cuando abrimos la sección de descarga, aseguramos que el body NO tenga no-scroll,
                 // ya que la sección de descarga ahora tiene su propio scroll.
                 document.body.classList.remove('no-scroll'); // Forzar la eliminación
+                document.body.style.position = ''; // Asegurar que no esté fijo
+                document.body.style.top = ''; // Limpiar top
+                document.body.style.width = ''; // Limpiar width
                 console.log("DEBUG: Sección de descarga abierta completamente, display establecido en flex. Se aseguró que body.no-scroll sea eliminado.");
             }
         }
@@ -1986,7 +1990,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Cerrar el panel de selección después de generar el enlace
         if (elements.selectionPanel) elements.selectionPanel.classList.remove('open');
         elements.selectionPanel.style.display = 'none'; // Ocultar explícitamente
-        removeBodyNoScroll();
+        // removeBodyNoScroll(); // Ya se maneja en el cierre del lightbox si está abierto
     }
 
     /**
@@ -2186,16 +2190,16 @@ document.addEventListener('DOMContentLoaded', () => {
         // Navegación Móvil
         if (elements.menuToggle) elements.menuToggle.addEventListener('click', () => {
             if (elements.mobileMenu) elements.mobileMenu.classList.add('open');
-            setBodyNoScroll();
+            setBodyNoScroll(); // Asegurar que el scroll se bloquee
         });
         if (elements.closeMenuBtn) elements.closeMenuBtn.addEventListener('click', () => {
             if (elements.mobileMenu) elements.mobileMenu.classList.remove('open');
-            removeBodyNoScroll();
+            removeBodyNoScroll(); // Asegurar que el scroll se desbloquee
         });
         elements.mobileNavLinks.forEach(link => {
             link.addEventListener('click', () => {
                 if (elements.mobileMenu) elements.mobileMenu.classList.remove('open');
-                removeBodyNoScroll();
+                removeBodyNoScroll(); // Asegurar que el scroll se desbloquee
             });
         });
 
@@ -2211,7 +2215,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Lightbox
-        // MODIFICADO: Añadido e.preventDefault() al click del botón de cierre.
         if (elements.lightboxClose) elements.lightboxClose.addEventListener('click', (e) => {
             e.preventDefault(); // Evitar cualquier comportamiento por defecto
             closeLightbox();
@@ -2219,7 +2222,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.lightboxPrev) elements.lightboxPrev.addEventListener('click', () => navigateLightbox(-1));
         if (elements.lightboxNext) elements.lightboxNext.addEventListener('click', () => navigateLightbox(1));
 
-        // NUEVO: Cerrar Lightbox al hacer clic fuera del contenido (en el overlay)
+        // Cerrar Lightbox al hacer clic fuera del contenido (en el overlay)
         if (elements.lightbox) {
             elements.lightbox.addEventListener('click', (event) => {
                 // Si el clic fue directamente en el contenedor del lightbox (el overlay), y no en su contenido
@@ -2235,13 +2238,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.selectionIcon) elements.selectionIcon.addEventListener('click', () => {
             if (elements.selectionPanel) elements.selectionPanel.classList.add('open');
             elements.selectionPanel.style.display = 'flex'; // Asegurar que se convierta en flex al abrir
-            setBodyNoScroll();
+            setBodyNoScroll(); // Asegurar que el scroll se bloquee
             updateSelectionUI();
         });
         if (elements.closeSelectionPanelBtn) elements.closeSelectionPanelBtn.addEventListener('click', () => {
             if (elements.selectionPanel) elements.selectionPanel.classList.remove('open');
             elements.selectionPanel.style.display = 'none'; // Ocultar explícitamente
-            removeBodyNoScroll();
+            removeBodyNoScroll(); // Asegurar que el scroll se desbloquee
         });
         if (elements.clearSelectionBtn) elements.clearSelectionBtn.addEventListener('click', clearSelection);
 
@@ -2254,7 +2257,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (elements.paymentModal) elements.paymentModal.classList.add('open');
             elements.paymentModal.style.display = 'flex'; // Asegurar que se convierta en flex al abrir
-            setBodyNoScroll();
+            setBodyNoScroll(); // Asegurar que el scroll se bloquee
             togglePaymentDetails(true);
             if (elements.paymentMethodToggle) elements.paymentMethodToggle.checked = false;
         });
@@ -2275,7 +2278,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.closePaymentModalBtn) elements.closePaymentModalBtn.addEventListener('click', () => {
             if (elements.paymentModal) elements.paymentModal.classList.remove('open');
             elements.paymentModal.style.display = 'none'; // Ocultar explícitamente
-            removeBodyNoScroll();
+            removeBodyNoScroll(); // Asegurar que el scroll se desbloquee
         });
         if (elements.paymentMethodToggle) elements.paymentMethodToggle.addEventListener('change', (event) => {
             togglePaymentDetails(!event.target.checked);
@@ -2332,12 +2335,12 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (elements.paymentModal && elements.paymentModal.classList.contains('open') && e.key === 'Escape') {
                 if (elements.paymentModal) elements.paymentModal.classList.remove('open');
                 elements.paymentModal.style.display = 'none'; // Ocultar explícitamente
-                removeBodyNoScroll();
+                removeBodyNoScroll(); // Asegurar que el scroll se desbloquee
                 e.preventDefault();
             } else if (elements.selectionPanel && elements.selectionPanel.classList.contains('open') && e.key === 'Escape') {
                 if (elements.selectionPanel) elements.selectionPanel.classList.remove('open');
                 elements.selectionPanel.style.display = 'none'; // Ocultar explícitamente
-                removeBodyNoScroll();
+                removeBodyNoScroll(); // Asegurar que el scroll se desbloquee
                 e.preventDefault();
             } else if (elements.adminPanel && elements.adminPanel.classList.contains('open') && e.key === 'Escape') {
                 closeAdminPanel();
@@ -2356,7 +2359,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log("DEBUG: Clic fuera del panel de selección, cerrando.");
                     if (elements.selectionPanel) elements.selectionPanel.classList.remove('open');
                     elements.selectionPanel.style.display = 'none'; // Ocultar explícitamente
-                    removeBodyNoScroll();
+                    removeBodyNoScroll(); // Asegurar que el scroll se desbloquee
                 }
             }
             // Cerrar Modal de Pago
@@ -2369,7 +2372,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log("DEBUG: Clic fuera del modal de pago, cerrando.");
                     if (elements.paymentModal) elements.paymentModal.classList.remove('open');
                     elements.paymentModal.style.display = 'none'; // Ocultar explícitamente
-                    removeBodyNoScroll();
+                    removeBodyNoScroll(); // Asegurar que el scroll se desbloquee
                 }
             }
 
@@ -2402,7 +2405,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log("DEBUG: Clic derecho en el panel de selección abierto, cerrando.");
                 if (elements.selectionPanel) elements.selectionPanel.classList.remove('open');
                 elements.selectionPanel.style.display = 'none'; // Ocultar explícitamente
-                removeBodyNoScroll();
+                removeBodyNoScroll(); // Asegurar que el scroll se desbloquee
             }
             if (elements.adminPanel && elements.adminPanel.classList.contains('open')) {
                 event.preventDefault(); // Prevenir el menú contextual predeterminado del navegador
