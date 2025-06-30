@@ -139,8 +139,8 @@ document.addEventListener('DOMContentLoaded', () => {
         clearSelectionBtn: document.getElementById('clear-selection-btn'),
         whatsappBtn: document.getElementById('whatsapp-btn'),
         packSummaryMessage: document.getElementById('pack-summary-message'),
-        downloadLinkGeneratorBtn: document.getElementById('download-link-generator-btn'),
-        whatsappDownloadLinkBtn: document.getElementById('whatsapp-download-link-btn'), // Para el enlace de descarga del carrito
+        // downloadLinkGeneratorBtn: document.getElementById('download-link-generator-btn'), // Ocultado
+        // whatsappDownloadLinkBtn: document.getElementById('whatsapp-download-link-btn'), // Ocultado
 
         // Modal de Pago
         paymentModal: document.getElementById('payment-modal'),
@@ -404,24 +404,19 @@ document.addEventListener('DOMContentLoaded', () => {
      * Renderiza la lista detallada de ítems seleccionados en el panel del carrito.
      */
     function renderSelectedItemsInCart() {
-        if (!elements.selectedItemsList || !elements.packSummaryMessage || !elements.downloadLinkGeneratorBtn || !elements.whatsappDownloadLinkBtn) return;
+        // Se eliminan las referencias a elements.downloadLinkGeneratorBtn y elements.whatsappDownloadLinkBtn
+        // ya que estos botones están ocultos y su estado no necesita ser gestionado aquí.
+        if (!elements.selectedItemsList || !elements.packSummaryMessage) return;
 
         elements.selectedItemsList.innerHTML = ''; // Limpiar lista existente
 
         if (selectedItems.size === 0) {
             elements.selectedItemsList.innerHTML = '<li class="empty-selection"><i class="fas fa-shopping-cart"></i><p>Tu selección está vacía.<br>¡Añade fotos o productos!</p></li>';
-            // El botón de WhatsApp flotante ya no se gestiona aquí, sino en setMainPageDisplay
             elements.packSummaryMessage.style.display = 'none'; // Ocultar mensaje del paquete
-            // Deshabilitar los botones de generación de enlaces de descarga si no hay fotos seleccionadas
-            elements.downloadLinkGeneratorBtn.disabled = true; 
-            elements.whatsappDownloadLinkBtn.disabled = true;
             return;
         } else {
-            // El botón de WhatsApp flotante ya no se gestiona aquí, sino en setMainPageDisplay
-            // Verificar si hay fotos en el carrito para habilitar los botones de enlace de descarga
-            const hasPhotosInCart = Array.from(selectedItems.values()).some(item => item.type === 'photo' && item.quantity > 0);
-            elements.downloadLinkGeneratorBtn.disabled = !hasPhotosInCart;
-            elements.whatsappDownloadLinkBtn.disabled = !hasPhotosInCart;
+            // No se gestiona la habilitación/deshabilitación de los botones de descarga aquí,
+            // ya que se han ocultado permanentemente.
         }
 
         const selectedPhotosArray = [];
@@ -615,7 +610,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     itemData: itemData // Guarda los datos completos de la foto
                 };
                 selectedItems.set(mapKey, itemToStore);
-                showToast(`"${itemData.name || `Foto ${itemData.id}`}" añadida.`, 'success');
+                showToast(`"${itemData.name || `Foto ${item.id}`}" añadida.`, 'success');
             }
         } else if (type === 'product') {
             // Si no se especifica una imagen, usar la primera por defecto (para clic en la tarjeta principal)
