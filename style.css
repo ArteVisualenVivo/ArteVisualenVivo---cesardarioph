@@ -48,7 +48,9 @@ body {
 /* Evita el scroll cuando un modal o panel está abierto */
 body.no-scroll {
     overflow: hidden;
-    height: 100vh; /* Fixes height when overflow is hidden */
+    /* REMOVIDO: height: 100vh; */ /* Esta línea es la que a menudo causa el salto */
+    position: fixed; /* Añadido: Fija el body en su posición actual */
+    width: 100%; /* Añadido: Asegura que el body ocupe todo el ancho */
 }
 
 .container {
