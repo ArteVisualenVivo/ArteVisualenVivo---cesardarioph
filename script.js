@@ -1001,7 +1001,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // --- FIN DEL CAMBIO ---
 
-        message += `\n\nEspero tus instrucciones para recibir los archivos/productos. ¡Gracias!`;
+        // AÑADIR LA INSTRUCCIÓN PARA ADJUNTAR EL COMPROBANTE
+        message += `\n\n*IMPORTANTE:* Por favor, adjunta el comprobante de pago en este chat para que podamos procesar tu pedido. ¡Gracias!`;
 
         return `https://wa.me/${CONFIG.WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
     }
