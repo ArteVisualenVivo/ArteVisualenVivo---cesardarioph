@@ -79,7 +79,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentLightboxItems = [];  // Los ítems (fotos o imágenes de productos) actualmente vistos en el lightbox
     let currentPhotoIndex = 0;      // Índice del ítem actual en el lightbox
     let currentLightboxContext = ''; // 'gallery' o 'product'
-    let lastScrollY = 0; // Para guardar la posición del scroll antes de abrir el lightbox
+    
+    // NUEVAS VARIABLES PARA EL BLOQUEO DE SCROLL
+    let scrollPosition = 0;
+    let activeScrollLocks = 0; // Contador para saber cuántos elementos quieren bloquear el scroll
 
     // *** NUEVO: Para la Sección de Descarga del Cliente ***
     let clientDownloadPhotos = []; // Almacena fotos para mostrar en la sección de descarga
@@ -737,15 +740,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // MODIFICADO: Guardar la posición actual del scroll y aplicar position: fixed
-        lastScrollY = window.scrollY;
-        document.body.style.position = 'fixed';
-        document.body.style.top = `-${lastScrollY}px`;
-        document.body.style.width = '100%';
-        document.body.classList.add('no-scroll'); // Asegurar que la clase 'no-scroll' también se aplique
-        console.log("DEBUG: lastScrollY guardado:", lastScrollY);
-        console.log("DEBUG: Body position:fixed aplicado.");
-
+        setBodyNoScroll(); // Bloquear el scroll del body
 
         elements.lightboxImage.style.display = 'none';
         elements.lightboxVideo.style.display = 'none';
@@ -820,7 +815,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         elements.lightbox.classList.add('open');
-        // setBodyNoScroll(); // Ya se maneja dentro de esta función
     }
 
     /**
@@ -831,15 +825,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.lightbox.classList.remove('open');
         elements.lightboxVideo.pause();
         elements.lightboxVideo.removeAttribute('src'); // Limpia la fuente del video
-        // MODIFICADO: Restaurar la posición del scroll y eliminar position: fixed
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        document.body.classList.remove('no-scroll'); // Asegurar que la clase 'no-scroll' también se elimine
-        window.scrollTo(0, lastScrollY);
-        console.log("DEBUG: Scroll restaurado a:", lastScrollY);
-        console.log("DEBUG: Body position:fixed eliminado.");
-
+        removeBodyNoScroll(); // Desbloquear el scroll del body
         updateGridButtonsState(); // Actualiza los estados de los botones cuando se cierra el lightbox
         console.log("DEBUG: Lightbox cerrado. Estado de gallerySection display:", elements.gallerySection.style.display); // Added log
     }
@@ -1512,7 +1498,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         elements.adminPanel.classList.add('open'); // Añadir clase 'open' para hacerlo visible vía CSS
         elements.adminPanel.style.display = 'flex'; // Usar flex para que el contenido respete la dirección flex en CSS
-        setBodyNoScroll();
+        setBodyNoScroll(); // Bloquear el scroll del body
 
         // Rellenar y limpiar entradas para precios de fotos
         if (elements.photoPriceTier1Input) elements.photoPriceTier1Input.value = CONFIG.PHOTO_PRICE_TIER_1;
@@ -1546,7 +1532,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.adminPanel) {
             elements.adminPanel.classList.remove('open');
             elements.adminPanel.style.display = 'none'; // Ocultar explícitamente el panel
-            removeBodyNoScroll();
+            removeBodyNoScroll(); // Desbloquear el scroll del body
             console.log("DEBUG: Panel de administración cerrado y display establecido en none.");
         }
     }
@@ -1687,11 +1673,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Funciones para gestionar el estado de no-scroll del cuerpo ---
     function setBodyNoScroll() {
-        // Se maneja directamente en openLightbox para capturar el scroll exacto
+        if (activeScrollLocks === 0) { // Solo bloquear si no hay otro bloqueo activo
+            scrollPosition = window.scrollY;
+            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.top = `-${scrollPosition}px`;
+            document.body.style.width = '100%';
+            document.body.classList.add('no-scroll');
+            console.log("DEBUG: Scroll bloqueado. Posición:", scrollPosition);
+        }
+        activeScrollLocks++;
     }
 
     function removeBodyNoScroll() {
-        // Se maneja directamente en closeLightbox para restaurar el scroll exacto
+        activeScrollLocks--;
+        if (activeScrollLocks <= 0) { // Solo desbloquear si no quedan bloqueos
+            activeScrollLocks = 0; // Asegurar que no sea negativo
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.width = '';
+            document.body.classList.remove('no-scroll');
+            window.scrollTo(0, scrollPosition);
+            console.log("DEBUG: Scroll desbloqueado. Restaurado a:", scrollPosition);
+        }
     }
 
 
@@ -1774,20 +1779,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.downloadSection.classList.remove('open-full');
                 elements.downloadSection.style.display = 'none';
                 // Cuando volvemos a la vista principal, aseguramos que el body.no-scroll se maneje correctamente
-                document.body.classList.remove('no-scroll');
-                document.body.style.position = '';
-                document.body.style.top = '';
-                document.body.style.width = '';
+                // Nota: removeBodyNoScroll() ya se encarga de esto si se llama desde un modal
+                // Pero si se llama desde aquí sin un modal abierto, hay que forzarlo
+                if (activeScrollLocks === 0) { // Solo si no hay otros bloqueos activos
+                    document.body.classList.remove('no-scroll');
+                    document.body.style.position = '';
+                    document.body.style.top = '';
+                    document.body.style.width = '';
+                }
                 console.log("DEBUG: Sección de descarga cerrada, display establecido en none.");
             } else {
                 elements.downloadSection.classList.add('open-full');
                 elements.downloadSection.style.display = 'flex'; // Necesita ser flex para organizar el contenido
                 // Cuando abrimos la sección de descarga, aseguramos que el body NO tenga no-scroll,
                 // ya que la sección de descarga ahora tiene su propio scroll.
-                document.body.classList.remove('no-scroll'); // Forzar la eliminación
-                document.body.style.position = ''; // Asegurar que no esté fijo
-                document.body.style.top = ''; // Limpiar top
-                document.body.style.width = ''; // Limpiar width
+                // Forzar la eliminación de cualquier bloqueo de scroll del body
+                document.body.classList.remove('no-scroll'); 
+                document.body.style.position = ''; 
+                document.body.style.top = ''; 
+                document.body.style.width = ''; 
+                activeScrollLocks = 0; // Resetear el contador de bloqueos para la sección de descarga
                 console.log("DEBUG: Sección de descarga abierta completamente, display establecido en flex. Se aseguró que body.no-scroll sea eliminado.");
             }
         }
@@ -1840,7 +1851,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Asegurar que otros paneles estén cerrados antes de intentar abrir el específico
             elements.selectionPanel.classList.remove('open');
             elements.paymentModal.classList.remove('open');
-            // elements.lightbox.classList.remove('open'); // Lightbox ahora se gestiona independientemente
             elements.adminPanel.style.display = 'none'; // Asegurar que esté oculto antes de que openAdminPanel intente mostrarlo
 
             // Abrir el panel de administración
@@ -1990,7 +2000,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Cerrar el panel de selección después de generar el enlace
         if (elements.selectionPanel) elements.selectionPanel.classList.remove('open');
         elements.selectionPanel.style.display = 'none'; // Ocultar explícitamente
-        // removeBodyNoScroll(); // Ya se maneja en el cierre del lightbox si está abierto
+        removeBodyNoScroll(); // Desbloquear el scroll del body
     }
 
     /**
@@ -2190,16 +2200,16 @@ document.addEventListener('DOMContentLoaded', () => {
         // Navegación Móvil
         if (elements.menuToggle) elements.menuToggle.addEventListener('click', () => {
             if (elements.mobileMenu) elements.mobileMenu.classList.add('open');
-            setBodyNoScroll(); // Asegurar que el scroll se bloquee
+            setBodyNoScroll(); // Bloquear el scroll
         });
         if (elements.closeMenuBtn) elements.closeMenuBtn.addEventListener('click', () => {
             if (elements.mobileMenu) elements.mobileMenu.classList.remove('open');
-            removeBodyNoScroll(); // Asegurar que el scroll se desbloquee
+            removeBodyNoScroll(); // Desbloquear el scroll
         });
         elements.mobileNavLinks.forEach(link => {
             link.addEventListener('click', () => {
                 if (elements.mobileMenu) elements.mobileMenu.classList.remove('open');
-                removeBodyNoScroll(); // Asegurar que el scroll se desbloquee
+                removeBodyNoScroll(); // Desbloquear el scroll
             });
         });
 
@@ -2238,13 +2248,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.selectionIcon) elements.selectionIcon.addEventListener('click', () => {
             if (elements.selectionPanel) elements.selectionPanel.classList.add('open');
             elements.selectionPanel.style.display = 'flex'; // Asegurar que se convierta en flex al abrir
-            setBodyNoScroll(); // Asegurar que el scroll se bloquee
+            setBodyNoScroll(); // Bloquear el scroll
             updateSelectionUI();
         });
         if (elements.closeSelectionPanelBtn) elements.closeSelectionPanelBtn.addEventListener('click', () => {
             if (elements.selectionPanel) elements.selectionPanel.classList.remove('open');
             elements.selectionPanel.style.display = 'none'; // Ocultar explícitamente
-            removeBodyNoScroll(); // Asegurar que el scroll se desbloquee
+            removeBodyNoScroll(); // Desbloquear el scroll
         });
         if (elements.clearSelectionBtn) elements.clearSelectionBtn.addEventListener('click', clearSelection);
 
@@ -2257,7 +2267,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (elements.paymentModal) elements.paymentModal.classList.add('open');
             elements.paymentModal.style.display = 'flex'; // Asegurar que se convierta en flex al abrir
-            setBodyNoScroll(); // Asegurar que el scroll se bloquee
+            setBodyNoScroll(); // Bloquear el scroll
             togglePaymentDetails(true);
             if (elements.paymentMethodToggle) elements.paymentMethodToggle.checked = false;
         });
@@ -2278,7 +2288,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.closePaymentModalBtn) elements.closePaymentModalBtn.addEventListener('click', () => {
             if (elements.paymentModal) elements.paymentModal.classList.remove('open');
             elements.paymentModal.style.display = 'none'; // Ocultar explícitamente
-            removeBodyNoScroll(); // Asegurar que el scroll se desbloquee
+            removeBodyNoScroll(); // Desbloquear el scroll
         });
         if (elements.paymentMethodToggle) elements.paymentMethodToggle.addEventListener('change', (event) => {
             togglePaymentDetails(!event.target.checked);
@@ -2335,12 +2345,12 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (elements.paymentModal && elements.paymentModal.classList.contains('open') && e.key === 'Escape') {
                 if (elements.paymentModal) elements.paymentModal.classList.remove('open');
                 elements.paymentModal.style.display = 'none'; // Ocultar explícitamente
-                removeBodyNoScroll(); // Asegurar que el scroll se desbloquee
+                removeBodyNoScroll(); // Desbloquear el scroll
                 e.preventDefault();
             } else if (elements.selectionPanel && elements.selectionPanel.classList.contains('open') && e.key === 'Escape') {
                 if (elements.selectionPanel) elements.selectionPanel.classList.remove('open');
                 elements.selectionPanel.style.display = 'none'; // Ocultar explícitamente
-                removeBodyNoScroll(); // Asegurar que el scroll se desbloquee
+                removeBodyNoScroll(); // Desbloquear el scroll
                 e.preventDefault();
             } else if (elements.adminPanel && elements.adminPanel.classList.contains('open') && e.key === 'Escape') {
                 closeAdminPanel();
@@ -2359,7 +2369,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log("DEBUG: Clic fuera del panel de selección, cerrando.");
                     if (elements.selectionPanel) elements.selectionPanel.classList.remove('open');
                     elements.selectionPanel.style.display = 'none'; // Ocultar explícitamente
-                    removeBodyNoScroll(); // Asegurar que el scroll se desbloquee
+                    removeBodyNoScroll(); // Desbloquear el scroll
                 }
             }
             // Cerrar Modal de Pago
@@ -2372,7 +2382,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log("DEBUG: Clic fuera del modal de pago, cerrando.");
                     if (elements.paymentModal) elements.paymentModal.classList.remove('open');
                     elements.paymentModal.style.display = 'none'; // Ocultar explícitamente
-                    removeBodyNoScroll(); // Asegurar que el scroll se desbloquee
+                    removeBodyNoScroll(); // Desbloquear el scroll
                 }
             }
 
@@ -2405,7 +2415,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log("DEBUG: Clic derecho en el panel de selección abierto, cerrando.");
                 if (elements.selectionPanel) elements.selectionPanel.classList.remove('open');
                 elements.selectionPanel.style.display = 'none'; // Ocultar explícitamente
-                removeBodyNoScroll(); // Asegurar que el scroll se desbloquee
+                removeBodyNoScroll(); // Desbloquear el scroll
             }
             if (elements.adminPanel && elements.adminPanel.classList.contains('open')) {
                 event.preventDefault(); // Prevenir el menú contextual predeterminado del navegador
