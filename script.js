@@ -416,15 +416,15 @@ document.addEventListener('DOMContentLoaded', () => {
             // El botón de WhatsApp flotante ya no se gestiona aquí, sino en setMainPageDisplay
             elements.packSummaryMessage.style.display = 'none'; // Ocultar mensaje del paquete
             // Deshabilitar los botones de generación de enlaces de descarga si no hay fotos seleccionadas
-            elements.downloadLinkGeneratorBtn.disabled = true; 
-            elements.whatsappDownloadLinkBtn.disabled = true;
+            elements.downloadLinkGeneratorBtn.style.display = 'none'; // Ocultar si no hay ítems
+            elements.whatsappDownloadLinkBtn.style.display = 'none'; // Ocultar si no hay ítems
             return;
         } else {
             // El botón de WhatsApp flotante ya no se gestiona aquí, sino en setMainPageDisplay
             // Verificar si hay fotos en el carrito para habilitar los botones de enlace de descarga
             const hasPhotosInCart = Array.from(selectedItems.values()).some(item => item.type === 'photo' && item.quantity > 0);
-            elements.downloadLinkGeneratorBtn.disabled = !hasPhotosInCart;
-            elements.whatsappDownloadLinkBtn.disabled = !hasPhotosInCart;
+            elements.downloadLinkGeneratorBtn.style.display = hasPhotosInCart ? 'block' : 'none';
+            elements.whatsappDownloadLinkBtn.style.display = hasPhotosInCart ? 'block' : 'none';
         }
 
         const selectedPhotosArray = [];
@@ -554,7 +554,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     updateItemQuantity(product.id, selectedImage.id, 1, 'product');
                 });
 
-                const removeButton = document.createElement('button'); // Declarar removeButton aquí también
+                const removeButton = document.createElement('button'); // Declarar removeButton aquí
                 removeButton.className = 'remove-item-btn';
                 removeButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
                 removeButton.addEventListener('click', (e) => {
@@ -744,7 +744,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Guarda la posición de scroll actual antes de abrir el lightbox
-        lastScrollY = window.scrollY;
+        lastScrollY = 0; // Se establece en 0 para evitar problemas con el scroll en modales/paneles
+        // Si el body tiene no-scroll, no hay necesidad de guardar el scroll.
+        if (!document.body.classList.contains('no-scroll')) {
+            lastScrollY = window.scrollY;
+        }
+
 
         elements.lightboxImage.style.display = 'none';
         elements.lightboxVideo.style.display = 'none';
@@ -976,7 +981,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * Genera un mensaje de WhatsApp para notificación de pago.
-     * Este mensaje *también* incluye un enlace especial para que el administrador genere fácilmente enlaces de descarga.
+     * Este mensaje *solo* incluye los IDs de las fotos (si las hay) y el resumen del pedido para el administrador.
      * @returns {string} La URL de WhatsApp.
      */
     function generatePaymentWhatsAppUrl() {
@@ -1012,13 +1017,13 @@ document.addEventListener('DOMContentLoaded', () => {
             message = message.slice(0, -2) + '.'; // Eliminar la última ', ' y añadir un '.'
         }
 
-        // --- INICIO DEL CAMBIO PARA SIMPLIFICAR EL ENVÍO DEL LINK ---
-        // Si hay fotos seleccionadas, añadir el enlace de descarga directamente en el mensaje
+        // --- CORRECCIÓN: NO INCLUIR EL ENLACE DE DESCARGA PARA EL CLIENTE AQUÍ ---
+        // El cliente solo envía los IDs. El administrador generará el enlace.
+        // Si hay fotos seleccionadas, añadir los IDs de las fotos como un mensaje para el administrador.
         if (photoIdsForAdminLink.length > 0) {
-            const downloadLinkForClient = generateDownloadUrlFromIds(photoIdsForAdminLink.join(','), 'download');
-            message += `\n\n*Link de descarga para el cliente:*\n${downloadLinkForClient}`;
+            message += `\n\n*IDs de fotos para generar enlace (para administrador):*\n${photoIdsForAdminLink.join(',')}`;
         }
-        // --- FIN DEL CAMBIO ---
+        // --- FIN CORRECCIÓN ---
 
         message += `\n\nEspero tus instrucciones para recibir los archivos/productos. ¡Gracias!`;
 
@@ -1693,7 +1698,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Funciones para gestionar el estado de no-scroll del cuerpo ---
     function setBodyNoScroll() {
         document.body.classList.add('no-scroll');
-        console.log("DEBUG: body.no-scroll añadido.");
+        document.documentElement.classList.add('no-scroll'); // También al elemento HTML
+        console.log("DEBUG: body y html no-scroll añadido.");
     }
 
     function removeBodyNoScroll() {
@@ -1705,9 +1711,10 @@ document.addEventListener('DOMContentLoaded', () => {
             !(elements.lightbox && elements.lightbox.classList.contains('open'))
         ) {
             document.body.classList.remove('no-scroll');
-            console.log("DEBUG: body.no-scroll eliminado.");
+            document.documentElement.classList.remove('no-scroll'); // También al elemento HTML
+            console.log("DEBUG: body y html no-scroll eliminado.");
         } else {
-            console.log("DEBUG: body.no-scroll no eliminado (otro panel/modal está abierto).");
+            console.log("DEBUG: body y html no-scroll no eliminado (otro panel/modal está abierto).");
         }
     }
 
@@ -1799,6 +1806,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Cuando abrimos la sección de descarga, aseguramos que el body NO tenga no-scroll,
                 // ya que la sección de descarga ahora tiene su propio scroll.
                 document.body.classList.remove('no-scroll'); // Forzar la eliminación
+                document.documentElement.classList.remove('no-scroll'); // Forzar la eliminación del html también
                 console.log("DEBUG: Sección de descarga abierta completamente, display establecido en flex. Se aseguró que body.no-scroll sea eliminado.");
             }
         }
