@@ -38,79 +38,94 @@ function generateGalleryData(dir) {
                 for (const productEntry of productEntries) {
                     const productPath = path.join(entryPath, productEntry.name);
                     if (productEntry.isDirectory()) {
-                        const productName = productEntry.name;
+                        // Esto es una carpeta de producto (ej. "taza-personalizada")
                         const productImages = [];
-                        
-                        // Leer contenido de la carpeta de producto (imágenes/videos)
-                        const itemEntries = fs.readdirSync(productPath, { withFileTypes: true });
-                        for (const itemEntry of itemEntries) {
-                            const itemFullPath = path.join(productPath, itemEntry.name);
-                            // La ruta src debe ser relativa a la carpeta 'galeria/'
-                            const itemRelativePath = path.relative(galleryDir, itemFullPath).replace(/\\/g, '/'); // Asegurar barras correctas
-                            const fileExtension = path.extname(itemEntry.name).toLowerCase();
-                            let type = 'unknown';
+                        const imageEntries = fs.readdirSync(productPath, { withFileTypes: true });
 
-                            if (['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.jfif'].includes(fileExtension)) {
-                                type = 'image';
-                            } else if (['.mp4', '.mov', '.avi', '.webm'].includes(fileExtension)) {
-                                type = 'video';
-                            }
+                        for (const imageEntry of imageEntries) {
+                            const imagePath = path.join(productPath, imageEntry.name);
+                            const relativeImagePath = path.relative(galleryDir, imagePath).replace(/\\/g, '/'); // Ruta relativa desde 'galeria'
+                            const fileExtension = path.extname(imageEntry.name).toLowerCase();
+                            const fileNameWithoutExt = path.basename(imageEntry.name, fileExtension);
 
-                            if (type !== 'unknown') {
+                            // Solo añadir imágenes (jpg, jpeg, png, gif, webp, jfif)
+                            if (['.jpg', '.jpeg', '.png', '.gif', '.webp', '.jfif'].includes(fileExtension)) {
                                 productImages.push({
-                                    id: simpleHash(itemRelativePath), // ID estable basado en la ruta relativa
-                                    type: type,
-                                    src: itemRelativePath, // Ruta relativa a 'galeria/'
-                                    name: itemEntry.name.split('.')[0] // Nombre sin extensión
+                                    id: simpleHash(relativeImagePath), // ID estable para la imagen
+                                    name: fileNameWithoutExt,
+                                    src: relativeImagePath, // Ruta relativa desde 'galeria/'
+                                    type: 'image'
                                 });
                             }
                         }
-                        // Ordenar imágenes de producto por nombre de archivo
+                        // Ordenar las imágenes del producto por nombre de archivo para consistencia
                         productImages.sort((a, b) => a.src.localeCompare(b.src));
 
-                        if (productImages.length > 0) {
-                            products.push({
-                                id: simpleHash(path.relative(galleryDir, productPath)), // ID estable para el producto
-                                name: productName,
-                                path: path.relative(galleryDir, productPath).replace(/\\/g, '/'), // Ruta relativa del producto
-                                images: productImages
-                            });
+                        // Obtener el precio del producto de un archivo de texto si existe
+                        let productPrice = 0; // Precio por defecto
+                        const priceFilePath = path.join(productPath, 'price.txt');
+                        if (fs.existsSync(priceFilePath)) {
+                            try {
+                                productPrice = parseFloat(fs.readFileSync(priceFilePath, 'utf8').trim());
+                                if (isNaN(productPrice)) {
+                                    console.warn(`Advertencia: El precio en ${priceFilePath} no es un número válido. Usando 0.`);
+                                    productPrice = 0;
+                                }
+                            } catch (e) {
+                                console.error(`Error al leer el precio de ${priceFilePath}:`, e);
+                                productPrice = 0;
+                            }
+                        } else {
+                            console.warn(`Advertencia: No se encontró price.txt en ${productPath}. Usando precio por defecto 0.`);
                         }
+
+                        products.push({
+                            id: simpleHash(path.relative(galleryDir, productPath).replace(/\\/g, '/')), // ID estable para la carpeta del producto
+                            name: productEntry.name.replace(/-/g, ' ').replace(/\b\w/g, char => char.toUpperCase()), // Formatear nombre
+                            price: productPrice,
+                            // Asegurarse de que siempre haya al menos una imagen, incluso si es un placeholder
+                            images: productImages.length > 0 ? productImages : [{
+                                id: simpleHash(productEntry.name + '_placeholder'), // ID único para el placeholder
+                                name: 'Sin Imagen',
+                                src: 'https://placehold.co/400x300/cccccc/333333?text=Sin+Imagen', // URL del placeholder
+                                type: 'image'
+                            }]
+                        });
                     }
                 }
-                // Ordenar productos por nombre
+                // Ordenar los productos por nombre
                 products.sort((a, b) => a.name.localeCompare(b.name));
-                categoryContent = products; // El contenido de la categoría de productos son los productos
-
-            } else { // Es una categoría de evento normal
-                // Función recursiva para encontrar archivos de medios
-                function findMediaFiles(currentPath, currentRelativePath) {
-                    const currentEntries = fs.readdirSync(currentPath, { withFileTypes: true });
-                    const mediaFiles = [];
+                categoryContent = products; // Asignar los productos a categoryContent
+            } else {
+                // Esto es una categoría de galería (eventos, subcategorías)
+                function findMediaFiles(currentDir, currentCategoryPath) {
+                    let mediaFiles = [];
+                    const currentEntries = fs.readdirSync(currentDir, { withFileTypes: true });
 
                     for (const currentEntry of currentEntries) {
-                        const subPath = path.join(currentPath, currentEntry.name);
-                        const subRelativePath = path.join(currentRelativePath, currentEntry.name).replace(/\\/g, '/');
+                        const currentEntryPath = path.join(currentDir, currentEntry.name);
+                        const relativePath = path.relative(galleryDir, currentEntryPath).replace(/\\/g, '/'); // Ruta relativa desde 'galeria'
+                        const fileExtension = path.extname(currentEntry.name).toLowerCase();
+                        const fileNameWithoutExt = path.basename(currentEntry.name, fileExtension);
 
                         if (currentEntry.isDirectory()) {
-                            // Si es un directorio, busca dentro de él
-                            mediaFiles.push(...findMediaFiles(subPath, subRelativePath));
+                            // Recursivamente buscar en subdirectorios
+                            mediaFiles = mediaFiles.concat(findMediaFiles(currentEntryPath, path.join(currentCategoryPath, currentEntry.name)));
                         } else {
-                            // Si es un archivo, verifica si es multimedia
-                            const fileExtension = path.extname(currentEntry.name).toLowerCase();
-                            let type = 'unknown';
-                            if (['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.jfif'].includes(fileExtension)) {
-                                type = 'image';
-                            } else if (['.mp4', '.mov', '.avi', '.webm'].includes(fileExtension)) {
-                                type = 'video';
-                            }
-
-                            if (type !== 'unknown') {
+                            // Solo añadir archivos multimedia (imágenes y videos)
+                            if (['.jpg', '.jpeg', '.png', '.gif', '.webp', '.jfif'].includes(fileExtension)) {
                                 mediaFiles.push({
-                                    id: simpleHash(subRelativePath), // ID estable para el archivo multimedia
-                                    type: type,
-                                    src: subRelativePath, // Ruta relativa a 'galeria/'
-                                    name: currentEntry.name.split('.')[0] // Nombre sin extensión
+                                    id: simpleHash(relativePath), // ID estable para la foto
+                                    name: fileNameWithoutExt,
+                                    src: relativePath, // Ruta relativa desde 'galeria/'
+                                    type: 'image'
+                                });
+                            } else if (['.mp4', '.mov', '.avi', '.webm'].includes(fileExtension)) {
+                                mediaFiles.push({
+                                    id: simpleHash(relativePath), // ID estable para el video
+                                    name: fileNameWithoutExt,
+                                    src: relativePath, // Ruta relativa desde 'galeria/'
+                                    type: 'video'
                                 });
                             }
                         }
